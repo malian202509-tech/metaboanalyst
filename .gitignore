@@ -1,0 +1,32 @@
+# Raw and processed data are excluded by default.
+data/
+
+# Keep result tables small and reviewable; exclude generated figures and other outputs.
+results/*
+!results/tables/
+!results/tables/*.csv
+!results/tables/*.md
+!results/tables/*.xlsx
+
+# Python caches and local environments.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# Local editor and OS files.
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.code-workspace
+
+# Local exploratory files not selected for upload.
+test/
+
+# Jupyter checkpoints.
+.ipynb_checkpoints/

@@ -1,0 +1,261 @@
+"""12. 代谢物 → 家族 / 酶系映射 (下游 heatmap/酶比值/GSEA 富集的共同基础).
+
+73 个氧化脂质 (50 探索轨为超集; 80 主轨为 67 子集) 按生物学家族分类:
+
+  7 大家族 (family_main, 论文 heatmap 分块用):
+    1. Endocannabinoid    : N-acylethanolamines (LEA, AEA)
+    2. Free PUFA          : 前体 (AA, LA, ALA, CLA 等)
+    3. AA-COX             : PG / TX / HHT (COX 通路)
+    4. AA-LOX             : HETE (5/8/11/12/15-LOX) + LT (5-LOX)
+    5. AA-CYP/sEH         : HETrE + EpETrE + DiHETrE + 16/18-HETE (ω羟化)
+    6. LA-oxylipin        : HODE/oxoODE/HpODE + EpOME/DiHOME
+    7. EPA/DHA/DPA-oxylipin : HEPE/HDoHE/PG3/TX3/EpDPA/DiHDPA (ω3 派生)
+
+子家族 (family_sub) + 上游底物 (substrate) + 主导酶系 (enzyme) 是机制层注释,
+供酶活性比值 (§13) 和 GSEA-like 富集 (§14) 直接使用.
+
+分类策略:
+  - 手工硬编码映射 (73 个特征, 全部可审计)
+  - 优先用 metabolite_name 精确匹配
+  - 同时打印未分类警告确保 100% 覆盖
+
+输入:
+  data/03_batch_corrected/ori_n165_filtered50_log2_combat.xlsx (73 特征超集)
+  data/03_batch_corrected/ori_n165_filtered80_log2_combat.xlsx (67 特征子集, 标 in_main_80)
+  results/tables/diff_candidates_50.csv (标 is_candidate_50)
+  results/tables/diff_candidates_80.csv (标 is_candidate_80)
+
+输出:
+  data/02_preprocessed/metabolite_family_map.csv (73 行 × ~12 列)
+  results/tables/family_summary.md (家族成员清单 + 候选标记)
+"""
+import os
+import sys
+import tempfile
+from pathlib import Path
+import pandas as pd
+
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+except (AttributeError, OSError):
+    pass
+
+ROOT = Path(__file__).resolve().parent.parent
+COMBAT_DIR = ROOT / 'data' / '03_batch_corrected'
+PREP_DIR = ROOT / 'data' / '02_preprocessed'
+TABLES = ROOT / 'results' / 'tables'
+
+# (family_main, family_sub, substrate, enzyme, short_label)
+FAMILY_MAP = {
+    # === 1. Endocannabinoid ===
+    'Linoleoyl ethanolamide':                                                              ('Endocannabinoid', 'N-acylethanolamine', 'LA',  'NAPE-PLD',           'LEA'),
+    'Anandamide':                                                                          ('Endocannabinoid', 'N-acylethanolamine', 'AA',  'NAPE-PLD',           'AEA'),
+
+    # === 2. Free PUFA (precursors) ===
+    'α-Linolenic acid':                                                                    ('Free PUFA', 'Precursor',                'ALA', '-',                   'ALA'),
+    'Arachidonic acid':                                                                    ('Free PUFA', 'Precursor',                'AA',  '-',                   'AA'),
+    'Linoelaidic acid':                                                                    ('Free PUFA', 'Precursor',                'tLA', '-',                   'tLA'),
+    'Linoleic acid':                                                                       ('Free PUFA', 'Precursor',                'LA',  '-',                   'LA'),
+    'Conjugated linoleic acids':                                                           ('Free PUFA', 'Precursor',                'LA',  '-',                   'CLA'),
+
+    # === 3. AA-COX pathway (PG / TX / HHT) ===
+    'Thromboxane B2':                                                                      ('AA-COX', 'Thromboxane',                 'AA',  'COX/TXA-syn',        'TXB2'),
+    '11β-Prostaglandin E2':                                                                ('AA-COX', 'PG (isomer)',                 'AA',  'COX',                '11β-PGE2'),
+    '15-Deoxy-δ-12,14-prostaglandin D2':                                                   ('AA-COX', 'PG (dehydration)',            'AA',  'COX/PGD-syn',        '15d-PGJ2-like'),
+    '11β-13,14-Dihydro-15-keto prostaglandinF2α':                                          ('AA-COX', 'PG (metabolite)',             'AA',  'COX/15-PGDH',        '11β-dh-keto-PGF2α'),
+    '1α,1β-Dihomo prostaglandin E2':                                                       ('AA-COX', 'PG (homolog)',                'AdrA','COX',                 'Dihomo-PGE2'),
+    'Prostaglandin A2':                                                                    ('AA-COX', 'Prostaglandin',               'AA',  'COX',                'PGA2'),
+    'Prostaglandin D2':                                                                    ('AA-COX', 'Prostaglandin',               'AA',  'COX/PGD-syn',        'PGD2'),
+    'Prostaglandin E2':                                                                    ('AA-COX', 'Prostaglandin',               'AA',  'COX/PGE-syn',        'PGE2'),
+    'Prostaglandin F2α':                                                                   ('AA-COX', 'Prostaglandin',               'AA',  'COX/PGF-syn',        'PGF2α'),
+    'Prostaglandin J2':                                                                    ('AA-COX', 'Prostaglandin',               'AA',  'COX/PGD-syn',        'PGJ2'),
+    'δ-12-Prostaglandin J2':                                                               ('AA-COX', 'PG (dehydration)',            'AA',  'COX/PGD-syn',        'δ12-PGJ2'),
+    '15-Keto prostaglandin F2α':                                                           ('AA-COX', 'PG (metabolite)',             'AA',  'COX/15-PGDH',        '15-keto-PGF2α'),
+    '6,15-Diketo-13,14-dihydro-prostaglandin F1α':                                         ('AA-COX', 'PGI2 metabolite',             'AA',  'COX/PGIS/15-PGDH',   '6,15-diketo-dh-PGF1α'),
+    '13,14-Dihydro-15-keto prostaglandin E2':                                              ('AA-COX', 'PG (metabolite)',             'AA',  'COX/15-PGDH',        '13,14-dh-15k-PGE2'),
+    '15-Keto prostaglandin E1':                                                            ('AA-COX', 'PG-1 (metabolite)',           'DGLA','COX/15-PGDH',        '15-keto-PGE1'),
+    '13,14-Dihydro-15-keto Prostaglandin E1':                                              ('AA-COX', 'PG-1 (metabolite)',           'DGLA','COX/15-PGDH',        '13,14-dh-15k-PGE1'),
+    'Prostaglandin F1α':                                                                   ('AA-COX', 'PG-1',                        'DGLA','COX',                'PGF1α'),
+    'Prostaglandin D1':                                                                    ('AA-COX', 'PG-1',                        'DGLA','COX/PGD-syn',        'PGD1'),
+    '13,14-Dihydro-15-keto-pgf2α':                                                         ('AA-COX', 'PG (metabolite)',             'AA',  'COX/15-PGDH',        '13,14-dh-15k-PGF2α'),
+    '15-Keto prostaglandin E2':                                                            ('AA-COX', 'PG (metabolite)',             'AA',  'COX/15-PGDH',        '15-keto-PGE2'),
+    '13,14-Dihydro-15-keto Prostaglandin F1α':                                             ('AA-COX', 'PG-1 (metabolite)',           'DGLA','COX/15-PGDH',        '13,14-dh-15k-PGF1α'),
+    'Prostaglandin E1':                                                                    ('AA-COX', 'PG-1',                        'DGLA','COX/PGE-syn',        'PGE1'),
+    '12S-Hydroxy-5Z,8E,10E-heptadecatrienoic acid':                                        ('AA-COX', 'HHT (COX byproduct)',         'AA',  'COX/TXA-syn',        '12-HHT'),
+
+    # === 4. AA-LOX (HETE + LT) ===
+    '11-Hydroxy-5Z,8Z,11E,14Z-eicosatetraenoic acid':                                      ('AA-LOX', 'HETE',                        'AA',  '11R-LOX/Auto-ox',    '11-HETE'),
+    '15-Hydroxy-5Z,8Z,11Z,13E-eicosatetraenoic acid':                                      ('AA-LOX', 'HETE',                        'AA',  '15-LOX',             '15-HETE'),
+    '8-Hydroxy-5Z,9E,11Z,14Z-eicosatetraenoic acid':                                       ('AA-LOX', 'HETE',                        'AA',  '8-LOX/Auto-ox',      '8-HETE'),
+    '12-Hydroxy-5Z,8Z,10E,14Z-eicosatetraenoic acid':                                      ('AA-LOX', 'HETE',                        'AA',  '12-LOX',             '12-HETE'),
+    'Leukotriene E4':                                                                      ('AA-LOX', 'Leukotriene',                 'AA',  '5-LOX/LTC4-syn',     'LTE4'),
+    'Leukotriene B4':                                                                      ('AA-LOX', 'Leukotriene',                 'AA',  '5-LOX/LTA4-H',       'LTB4'),
+    '8-Hydroxy-9E,11Z,14Z-eicosatrienoic acid':                                            ('AA-LOX', 'HETrE (monohydroxy)',     'AA→ETrE','8-LOX/Auto-ox via HpETE', '8-HETrE'),
+    '12-Hydroxy-8Z,10E,14Z-eicosatrienoic acid':                                           ('AA-LOX', 'HETrE (monohydroxy)',     'AA→ETrE','12-LOX via HpETE',        '12-HETrE'),
+    '15-Hydroxy-8Z,11Z,13E-eicosatrienoic acid':                                           ('AA-LOX', 'HETrE (monohydroxy)',     'DGLA',   '15-LOX',                  '15-HETrE'),
+    '15-Hydroxy-11Z,13E-eicosadienoic acid':                                               ('AA-LOX', 'HEDE (20:2 monohydroxy)', '20:2',   '15-LOX',                  '15-HEDE'),
+
+    # === 5. AA-CYP/sEH pathway (HETrE / EpETrE / DiHETrE / 16,18-HETE ω-OH) ===
+    '16-Hydroxy-5Z,8Z,11Z,14Z-eicosatetraenoic acid':                                      ('AA-CYP/sEH', 'HETE-ω',                  'AA',  'CYP4',                '16-HETE'),
+    '18-Hydroxy-5Z,8Z,11Z,14Z-eicosatetraenoic acid':                                      ('AA-CYP/sEH', 'HETE-ω',                  'AA',  'CYP4',                '18-HETE'),
+    '8,9-Dpoxy-5Z,11Z,14Z-eicosatrienoic acid':                                            ('AA-CYP/sEH', 'EpETrE (epoxy)',          'AA',  'CYP-Epo',             '8,9-EpETrE'),
+    '11,12-Epoxy-5Z,8Z,14Z-eicosatrienoic acid':                                           ('AA-CYP/sEH', 'EpETrE (epoxy)',          'AA',  'CYP-Epo',             '11,12-EpETrE'),
+    '5,6-DiHydroxy-8Z,11Z,14Z-eicosatrienoic acid':                                        ('AA-CYP/sEH', 'DiHETrE (diol)',          'AA',  'sEH',                 '5,6-DiHETrE'),
+    '8,9-DiHydroxy-5Z,11Z,14Z-eicosatrienoic acid':                                        ('AA-CYP/sEH', 'DiHETrE (diol)',          'AA',  'sEH',                 '8,9-DiHETrE'),
+    '11,12-DiHydroxy-5Z,8Z,14Z-eicosatrienoic acid':                                       ('AA-CYP/sEH', 'DiHETrE (diol)',          'AA',  'sEH',                 '11,12-DiHETrE'),
+    '14,15-DiHydroxy-5Z,8Z,11Z-eicosatrienoic acid':                                       ('AA-CYP/sEH', 'DiHETrE (diol)',          'AA',  'sEH',                 '14,15-DiHETrE'),
+    # HETrE / HEDE 移至 AA-LOX (与 12-/15-HETE 同源酶系: LOX → HpETrE → 还原+异构化)
+
+    # === 6. LA-oxylipin (HODE/oxoODE/HpODE + EpOME/DiHOME) ===
+    '9-Hydroxy-10E,12Z-octadecadienoic acid':                                              ('LA-oxylipin', 'HODE',                   'LA',  '9-LOX/Auto-ox',       '9-HODE'),
+    '13-Hydroxy-9Z,11E-octadecadienoic acid':                                              ('LA-oxylipin', 'HODE',                   'LA',  '13-LOX/Auto-ox',      '13-HODE'),
+    '9-Oxo-10E,12Z-octadecadienoic acid':                                                  ('LA-oxylipin', 'oxoODE',                 'LA',  '13-PGR/Auto-ox',      '9-oxoODE'),
+    '13-Oxo-9Z,11E-octadecadienoicacid':                                                   ('LA-oxylipin', 'oxoODE',                 'LA',  '13-PGR/Auto-ox',      '13-oxoODE'),
+    '9-Hydroperoxy-10E,12E-octadecadienoic acid':                                          ('LA-oxylipin', 'HpODE',                  'LA',  '9-LOX/Auto-ox',       '9-HpODE'),
+    '13-Hydroperoxy-9Z,11E-octadecadienoic acid':                                          ('LA-oxylipin', 'HpODE',                  'LA',  '13-LOX/Auto-ox',      '13-HpODE'),
+    '9,10-Epoxy-12Z-octadecenoic acid':                                                    ('LA-oxylipin', 'EpOME (epoxy)',          'LA',  'CYP-Epo',             '9,10-EpOME'),
+    '12,13-Epoxy-9Z-octadecenoic acid':                                                    ('LA-oxylipin', 'EpOME (epoxy)',          'LA',  'CYP-Epo',             '12,13-EpOME'),
+    '9,10-DiHydroxy-12Z-octadecenoic acid':                                                ('LA-oxylipin', 'DiHOME (diol)',          'LA',  'sEH',                 '9,10-DiHOME'),
+    '12,13 -DiHydroxy-9Z-octadecenoic acid':                                               ('LA-oxylipin', 'DiHOME (diol)',          'LA',  'sEH',                 '12,13-DiHOME'),
+
+    # === 7. EPA/DHA/DPA-oxylipin (ω3 系列) ===
+    # EPA
+    '12-Hydroxy-5,8,10,14,17-eicosapentaenoic acid':                                       ('EPA/DHA/DPA-oxylipin', 'HEPE (EPA)',     'EPA', '12-LOX',              '12-HEPE'),
+    '15-Hydroperoxy-5,8,11,14,17-eicosapentaenoic acid':                                   ('EPA/DHA/DPA-oxylipin', 'HpEPE (EPA)',    'EPA', '15-LOX',              '15-HpEPE'),
+    '11-Hydroxy- 5Z,8Z,12E,14Z,17Z-eicosapentaenoic acid':                                 ('EPA/DHA/DPA-oxylipin', 'HEPE (EPA)',     'EPA', '11R-LOX/Auto-ox',     '11-HEPE'),
+    'Prostaglandin F3α':                                                                   ('EPA/DHA/DPA-oxylipin', 'PG-3 (EPA)',     'EPA', 'COX',                 'PGF3α'),
+    'Thromboxane B3':                                                                      ('EPA/DHA/DPA-oxylipin', 'TX-3 (EPA)',     'EPA', 'COX/TXA-syn',         'TXB3'),
+    # DHA
+    '14-Hydroxy-4Z,7Z,10Z,12E,16Z,19Z-docosahexaenoic acid':                               ('EPA/DHA/DPA-oxylipin', 'HDoHE (DHA)',    'DHA', 'LOX',                 '14-HDoHE'),
+    '8-Hydroxy-4Z,6E,10Z,13Z,16Z,19Z-docosahexaenoic acid':                                ('EPA/DHA/DPA-oxylipin', 'HDoHE (DHA)',    'DHA', 'LOX',                 '8-HDoHE'),
+    '10-Hydroxy-4Z,7Z,11E,13Z,16Z,19Z-docosahexaenoic acid':                               ('EPA/DHA/DPA-oxylipin', 'HDoHE (DHA)',    'DHA', 'LOX',                 '10-HDoHE'),
+    '11-Hydroxy-4Z,7Z,9E,13Z,16Z,19Z-docosahexaenoic acid':                                ('EPA/DHA/DPA-oxylipin', 'HDoHE (DHA)',    'DHA', 'LOX',                 '11-HDoHE'),
+    '13-Hydroxy-4Z,7Z,10Z,14E,16Z,19Z-docosahexaenoic acid':                               ('EPA/DHA/DPA-oxylipin', 'HDoHE (DHA)',    'DHA', 'LOX',                 '13-HDoHE'),
+    '7-Hydroxy-4Z,8E,10Z,13Z,16Z,19Z-docosahexaenoic acid':                                ('EPA/DHA/DPA-oxylipin', 'HDoHE (DHA)',    'DHA', 'LOX',                 '7-HDoHE'),
+    '20-Hydroxy-4Z,7Z,10Z,13Z,16Z,18E-docosahexaenoic acid':                               ('EPA/DHA/DPA-oxylipin', 'HDoHE-ω (DHA)',  'DHA', 'CYP-ω',               '20-HDoHE'),
+    '16-Hydroxy-4Z,7Z,10Z,13Z,17E,19Z-docosahexaenoic acid':                               ('EPA/DHA/DPA-oxylipin', 'HDoHE-ω (DHA)',  'DHA', 'CYP-ω',               '16-HDoHE'),
+    # DPA
+    '19(20)-Epoxy-4Z,7Z,10Z,13Z,16Z-docosapentaenoic acid':                                ('EPA/DHA/DPA-oxylipin', 'EpDPA (DPA)',    'DPA', 'CYP-Epo',             '19,20-EpDPA'),
+    '19,20-DiHydroxy-4Z,7Z,10Z,13Z,16Z-docosapentaenoic acid':                             ('EPA/DHA/DPA-oxylipin', 'DiHDPA (DPA)',   'DPA', 'sEH',                 '19,20-DiHDPA'),
+}
+
+
+def atomic_write_csv(df, target):
+    target = Path(target)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=target.stem + '_', suffix='.csv.tmp', dir=str(target.parent))
+    os.close(fd)
+    try:
+        df.to_csv(tmp, index=False, encoding='utf-8-sig')
+        os.replace(tmp, target)
+    except PermissionError as e:
+        if os.path.exists(tmp): os.unlink(tmp)
+        raise PermissionError(f'无法写入 {target.name}: 文件可能正被 Excel/WPS 打开.') from e
+    except Exception:
+        if os.path.exists(tmp):
+            try: os.unlink(tmp)
+            except OSError: pass
+        raise
+
+
+def main():
+    print('=== 12. 代谢物→家族 映射 ===\n')
+
+    df50 = pd.read_excel(COMBAT_DIR / 'ori_n165_filtered50_log2_combat.xlsx')
+    df80 = pd.read_excel(COMBAT_DIR / 'ori_n165_filtered80_log2_combat.xlsx')
+
+    feat50 = set(df50['Metabolite Name'])
+    feat80 = set(df80['Metabolite Name'])
+    print(f'  50 轨特征: {len(feat50)}')
+    print(f'  80 轨特征: {len(feat80)}  (子集)')
+
+    # 候选标记
+    cand80 = pd.read_csv(TABLES / 'diff_candidates_80.csv', encoding='utf-8-sig')
+    cand50 = pd.read_csv(TABLES / 'diff_candidates_50.csv', encoding='utf-8-sig')
+    cand80_set = set(cand80['Metabolite Name'])
+    cand50_set = set(cand50['Metabolite Name'])
+
+    rows = []
+    unmapped = []
+    for _, r in df50.iterrows():
+        name = r['Metabolite Name']
+        if name not in FAMILY_MAP:
+            unmapped.append(name)
+            continue
+        fmain, fsub, sub, enz, short = FAMILY_MAP[name]
+        rows.append({
+            'Metabolite Name':     name,
+            'Chinese Name':        r['Chinese Name'] if pd.notna(r['Chinese Name']) else '',
+            'short_label':         short,
+            'family_main':         fmain,
+            'family_sub':          fsub,
+            'substrate':           sub,
+            'enzyme':              enz,
+            'KEGG ID':             r['KEGG ID'] if pd.notna(r['KEGG ID']) else '',
+            'HMDB ID':             r['HMDB ID'] if pd.notna(r['HMDB ID']) else '',
+            'in_main_80':          name in feat80,
+            'in_explor_50':        True,
+            'is_candidate_80':     name in cand80_set,
+            'is_candidate_50':     name in cand50_set,
+        })
+
+    if unmapped:
+        print(f'\n⚠ 未分类 {len(unmapped)} 个特征 (需补 FAMILY_MAP):')
+        for u in unmapped: print(f'    {u}')
+        raise RuntimeError('请补全 FAMILY_MAP 后重跑')
+
+    fmap = pd.DataFrame(rows)
+    fmap = fmap.sort_values(['family_main', 'family_sub', 'short_label']).reset_index(drop=True)
+
+    out_csv = PREP_DIR / 'metabolite_family_map.csv'
+    atomic_write_csv(fmap, out_csv)
+    print(f'\n✓ 映射写入: {out_csv.relative_to(ROOT)}')
+
+    # 家族汇总
+    print('\n=== 家族成员数 ===')
+    for fm in fmap['family_main'].unique():
+        sub = fmap[fmap['family_main'] == fm]
+        n_in80 = int(sub['in_main_80'].sum())
+        n_cand80 = int(sub['is_candidate_80'].sum())
+        n_cand50 = int(sub['is_candidate_50'].sum())
+        print(f'  {fm:30s} 总 {len(sub):3d}  在 80 轨 {n_in80:3d}  '
+              f'候选 (80/50): {n_cand80}/{n_cand50}')
+
+    # markdown summary
+    md_lines = ['# 代谢物 → 家族映射汇总\n',
+                '映射表: `data/02_preprocessed/metabolite_family_map.csv`  ',
+                '生成: `scripts/12_metabolite_family_map.py`\n',
+                '## 7 大家族总览\n',
+                '| 家族 | 总数 | 在 80 主轨 | 80 候选 | 50 候选 |',
+                '|---|---|---|---|---|']
+    for fm in fmap['family_main'].unique():
+        sub = fmap[fmap['family_main'] == fm]
+        md_lines.append(f'| **{fm}** | {len(sub)} | {int(sub["in_main_80"].sum())} | '
+                        f'{int(sub["is_candidate_80"].sum())} | '
+                        f'{int(sub["is_candidate_50"].sum())} |')
+
+    md_lines.append('\n## 各家族详细成员\n')
+    for fm in fmap['family_main'].unique():
+        sub = fmap[fmap['family_main'] == fm]
+        md_lines.append(f'### {fm}  ({len(sub)} 个)\n')
+        md_lines.append('| short | family_sub | substrate | enzyme | in_80 | cand_80 | cand_50 |')
+        md_lines.append('|---|---|---|---|---|---|---|')
+        for _, r in sub.iterrows():
+            tag80 = '★' if r['is_candidate_80'] else ('✓' if r['in_main_80'] else '-')
+            tag50 = '★' if r['is_candidate_50'] else '-'
+            md_lines.append(f'| `{r["short_label"]}` | {r["family_sub"]} | '
+                            f'{r["substrate"]} | {r["enzyme"]} | '
+                            f'{"✓" if r["in_main_80"] else "-"} | '
+                            f'{tag80} | {tag50} |')
+        md_lines.append('')
+
+    md_lines.append('---\n**标记说明**: ✓ = 在 80 主轨内; ★ = 差异代谢物候选 '
+                    '(p_limma<0.05 + |log2FC|≥log2(1.2) + 离群稳健)')
+
+    md_path = TABLES / 'family_summary.md'
+    md_path.write_text('\n'.join(md_lines), encoding='utf-8')
+    print(f'✓ 摘要写入: {md_path.relative_to(ROOT)}')
+
+
+if __name__ == '__main__':
+    main()

@@ -4,10 +4,13 @@
 - SMD 按四档阈值标注: <0.10 / 0.10-0.25 / 0.25-0.50 / >0.50
 - 输出 Excel + Markdown 两种格式
 """
+from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy import stats
 from scipy.stats import random_table
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def fisher_freeman_halton(ct, n_sim=20000, random_state=42):
@@ -33,7 +36,9 @@ def fisher_freeman_halton(ct, n_sim=20000, random_state=42):
     g2_sim = np.array([g2(s) for s in sim])
     return (np.sum(g2_sim >= g2_obs - 1e-12) + 1) / (n_sim + 1)  # 加1平滑
 
-SRC = '分娩特征分析_2019-2021_主分析队列n165.xlsx'
+SRC = ROOT / 'data' / '01_raw' / '分娩特征分析_2019-2021_主分析队列n165.xlsx'
+OUT_DIR = ROOT / 'results' / 'tables'
+OUT_DIR.mkdir(parents=True, exist_ok=True)
 GROUP_COL = 'BMI_group'
 GROUP_REF = '正常'
 GROUP_EXP = '超重肥胖'
@@ -49,6 +54,7 @@ CAT_VARS = [
     ('胎儿性别', '胎儿性别 [n (%)]', None),
     ('GA_category', '孕周分类 (ACOG) [n (%)]', ['早期足月','足月','晚期/过期足月']),
     ('出生体重_分类', '出生体重分类 [n (%)]', ['低出生体重','正常体重','巨大儿']),
+    ('分娩方式', '分娩方式 [n (%)]', ['顺产', '剖宫产']),
     ('GDM', 'GDM [n (%)]', [0,1]),
     ('PIH（妊娠期高血压）', 'PIH [n (%)]', [0,1]),
     ('脂代谢异常', '脂代谢异常 [n (%)]', [0,1]),
@@ -205,8 +211,9 @@ def main():
             })
 
     out = pd.DataFrame(rows)
-    out.to_excel('Table1_baseline_n165.xlsx', index=False)
-    print('已写入 Table1_baseline_n165.xlsx')
+    xlsx_path = OUT_DIR / 'Table1_baseline_n165.xlsx'
+    out.to_excel(xlsx_path, index=False)
+    print(f'已写入 {xlsx_path}')
 
     # Markdown
     md_lines = ['| ' + ' | '.join(out.columns) + ' |']
@@ -214,11 +221,12 @@ def main():
     for _, r in out.iterrows():
         md_lines.append('| ' + ' | '.join(str(v) for v in r.values) + ' |')
     md = '\n'.join(md_lines)
-    with open('Table1_baseline_n165.md', 'w', encoding='utf-8') as f:
+    md_path = OUT_DIR / 'Table1_baseline_n165.md'
+    with open(md_path, 'w', encoding='utf-8') as f:
         f.write('# Table 1. Baseline characteristics (n=165)\n\n')
         f.write(md + '\n\n')
         f.write('**SMD 提示**: √ = 可忽略 (<0.10);  ⚠ = 轻度不均衡 (0.10–0.25, 建议入 GLM);  ! = 明显不均衡 (0.25–0.50);  !! = 严重不均衡 (>0.50)\n')
-    print('已写入 Table1_baseline_n165.md')
+    print(f'已写入 {md_path}')
 
     print()
     print(md)

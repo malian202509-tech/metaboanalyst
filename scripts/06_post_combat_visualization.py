@@ -1,19 +1,25 @@
 """06. ComBat 校正后可视化与诊断: PCA + PLS-DA + OPLS-DA.
 
-每条数据轨生成一张 2x3 大图:
-  (0,0) 校正前 PCA 按年份   - 应该看到三色抱团
-  (0,1) 校正后 PCA 按年份   - 应该混匀  ← ComBat 是否生效的判定
-  (0,2) 校正后 PCA 按 BMI   - 论文 Figure 1 候选 (BMI 在全局可能仍不强分离, 正常)
-  (1,0) PLS-DA t1 vs t2 按 BMI                - 监督学习视角
-  (1,1) OPLS-DA t_pred vs t_ortho 按 BMI      - 监督学习 + 旋转
-  (1,2) PLS-DA permutation test (R²Y 真实 vs 200 次随机) - 验证是否过拟合
+【方案 D】本脚本与 05_combat.py 一致, 现在校正的是"上机批次 (injection batch)",
+年份保留作 ANCOVA 协变量, 在此处仅作可视化对照.
 
-也定量重算 PERMANOVA 年份效应, 看是否从 p=0.001 降到不显著.
+每条数据轨生成一张 2x3 大图:
+  (0,0) 校正前 PCA 按 batch  - 应该看到 batch 1/2 分离 (校正动力)
+  (0,1) 校正后 PCA 按 batch  - ComBat 是否生效的核心验证
+  (0,2) 校正后 PCA 按 BMI    - 论文 Figure 1 候选 (BMI 全局可能仍不强分离, 正常)
+  (1,0) PLS-DA t1 vs t2 按 BMI                - 监督学习 (无旋转)
+  (1,1) OPLS-DA t_pred vs t_ortho 按 BMI      - 监督学习 + 正交旋转
+  (1,2) OPLS-DA permutation test (R²Y + Q² 200 次置换) - 验证是否过拟合
+
+(year 已不在图中, 但仍在审计表中量化, 因为 year 是方案 D 留作 ANCOVA 协变量的因子)
+
+定量重算 PERMANOVA: batch (应不显著) + year (应保留) + BMI (期望仍弱).
 
 输入:
   data/02_preprocessed/ori_n165_filtered{80,50}_log2_pareto.xlsx              (校正前)
   data/03_batch_corrected/ori_n165_filtered{80,50}_log2_combat_pareto.xlsx   (校正后)
   data/02_preprocessed/sample_alignment_n165.csv
+  data/01_raw/上机顺序和批次表.xlsx                                            (C18 sheet)
 
 输出:
   results/figures/01_QC_and_Batch_PCA/PostCombat_diagnosis_{80,50}.png
@@ -35,6 +41,7 @@ from utils.opls import opls_da, pls_da, permutation_test_opls
 
 PRE_DIR = ROOT / 'data' / '02_preprocessed'
 POST_DIR = ROOT / 'data' / '03_batch_corrected'
+RAW_DIR = ROOT / 'data' / '01_raw'
 FIG_DIR = ROOT / 'results' / 'figures' / '01_QC_and_Batch_PCA'
 TBL_DIR = ROOT / 'results' / 'tables'
 FIG_DIR.mkdir(parents=True, exist_ok=True)
@@ -48,8 +55,18 @@ UNIT_COL = '浓度单位'
 mpl.rcParams['font.family'] = ['Microsoft YaHei', 'SimHei', 'DejaVu Sans']
 mpl.rcParams['axes.unicode_minus'] = False
 
+BATCH_COLORS = {'1': '#d62728', '2': '#9467bd'}
 YEAR_COLORS = {'A19 (2019)': '#1f77b4', 'B20 (2020)': '#ff7f0e', 'C21 (2021)': '#2ca02c'}
 BMI_COLORS = {'正常': '#4C72B0', '超重肥胖': '#DD8452'}
+
+
+def load_batch_table():
+    """读 C18 柱 sheet 的 batch 信息."""
+    p = RAW_DIR / '上机顺序和批次表.xlsx'
+    df = pd.read_excel(p, sheet_name='C18柱-上机顺序和批次表', header=1, usecols=range(4))
+    df.columns = ['order', 'class', 'omx_id', 'batch']
+    df['batch'] = pd.to_numeric(df['batch'], errors='coerce').astype('Int64')
+    return df[df['class'] == 'Subject'][['omx_id', 'batch']].reset_index(drop=True)
 
 
 def load_matrix(path):
@@ -183,15 +200,16 @@ def scatter_group(ax, x, y, groups, color_map, x_label, y_label, title, add_elli
     ax.legend(loc='best', fontsize=8)
 
 
-def diagnose_one(tier, tag, tag_short, pre_path, post_path):
+def diagnose_one(tier, tag, tag_short, pre_path, post_path, batch_tbl):
     print(f'\n{"="*60}')
     print(f'轨道 {tier}')
     X_pre, sample_ids = load_matrix(pre_path)
     X_post, _ = load_matrix(post_path)
     mp = pd.read_csv(PRE_DIR / 'sample_alignment_n165.csv')
-    meta = pd.DataFrame({'omx_id': sample_ids}).merge(
-        mp[['omx_id', 'BMI_group']], on='omx_id', how='left'
-    )
+    meta = (pd.DataFrame({'omx_id': sample_ids})
+              .merge(mp[['omx_id', 'BMI_group']], on='omx_id', how='left')
+              .merge(batch_tbl, on='omx_id', how='left'))
+    meta['batch_str'] = meta['batch'].astype(str)
     meta['year'] = meta['omx_id'].str[:3].map({
         'A19': 'A19 (2019)', 'B20': 'B20 (2020)', 'C21': 'C21 (2021)'
     })
@@ -209,15 +227,18 @@ def diagnose_one(tier, tag, tag_short, pre_path, post_path):
     print(f'  PCA pre  PC1/PC2: {var_pre[0]:.1f}% / {var_pre[1]:.1f}%')
     print(f'  PCA post PC1/PC2: {var_post[0]:.1f}% / {var_post[1]:.1f}%')
 
-    # PERMANOVA pre vs post (年份)
-    print(f'  --- PERMANOVA (年份) ---')
-    F_pre, p_pre = permanova(X_pre, meta['year'].values, n_perm=999)
-    F_post, p_post = permanova(X_post, meta['year'].values, n_perm=999)
-    print(f'    校正前: F = {F_pre:.3f}  p = {p_pre:.3f}')
-    print(f'    校正后: F = {F_post:.3f}  p = {p_post:.3f}')
-    print(f'    PERMANOVA (BMI) 校正后:', end=' ')
+    # PERMANOVA pre vs post: batch (核心验证) + year (应保留) + BMI
+    print(f'  --- PERMANOVA (999 置换) ---')
+    F_b_pre, p_b_pre = permanova(X_pre, meta['batch_str'].values, n_perm=999)
+    F_b_post, p_b_post = permanova(X_post, meta['batch_str'].values, n_perm=999)
+    print(f'    batch 校正前: F={F_b_pre:.3f}  p={p_b_pre:.3f}')
+    print(f'    batch 校正后: F={F_b_post:.3f}  p={p_b_post:.3f}  ← 应不显著')
+    F_y_pre, p_y_pre = permanova(X_pre, meta['year'].values, n_perm=999)
+    F_y_post, p_y_post = permanova(X_post, meta['year'].values, n_perm=999)
+    print(f'    year  校正前: F={F_y_pre:.3f}  p={p_y_pre:.3f}')
+    print(f'    year  校正后: F={F_y_post:.3f}  p={p_y_post:.3f}  ← 应仍显著 (留待 ANCOVA 协变量)')
     F_bmi, p_bmi = permanova(X_post, meta['BMI_group'].values, n_perm=999)
-    print(f'F = {F_bmi:.3f}  p = {p_bmi:.3f}')
+    print(f'    BMI   校正后: F={F_bmi:.3f}  p={p_bmi:.3f}')
 
     # PLS-DA (仅 scores 图用)
     y_bin = (meta['BMI_group'] == '超重肥胖').astype(int).values
@@ -239,30 +260,31 @@ def diagnose_one(tier, tag, tag_short, pre_path, post_path):
 
     # === 2x3 大图 ===
     fig, ax = plt.subplots(2, 3, figsize=(17, 10))
-    fig.suptitle(f'ComBat 校正后诊断与可视化 — {tier}', fontsize=14, fontweight='bold')
+    fig.suptitle(f'ComBat 校正后诊断与可视化 — {tier}  (校正 batch, year 留作 ANCOVA 协变量)',
+                 fontsize=13, fontweight='bold')
 
-    # (0,0) 校正前 PCA 按年份
-    scatter_group(ax[0, 0], pcs_pre[:, 0], pcs_pre[:, 1], meta['year'].values, YEAR_COLORS,
+    # (0,0) 校正前 PCA 按 batch (诊断 — 校正前 batch 分离)
+    scatter_group(ax[0, 0], pcs_pre[:, 0], pcs_pre[:, 1], meta['batch_str'].values, BATCH_COLORS,
                   f'PC1 ({var_pre[0]:.1f}%)', f'PC2 ({var_pre[1]:.1f}%)',
-                  f'校正前 PCA · 年份  (PERMANOVA p={p_pre:.3f})')
+                  f'校正前 PCA · batch  (PERMANOVA p={p_b_pre:.3f})')
 
-    # (0,1) 校正后 PCA 按年份
-    scatter_group(ax[0, 1], pcs_post[:, 0], pcs_post[:, 1], meta['year'].values, YEAR_COLORS,
+    # (0,1) 校正后 PCA 按 batch
+    scatter_group(ax[0, 1], pcs_post[:, 0], pcs_post[:, 1], meta['batch_str'].values, BATCH_COLORS,
                   f'PC1 ({var_post[0]:.1f}%)', f'PC2 ({var_post[1]:.1f}%)',
-                  f'校正后 PCA · 年份  (PERMANOVA p={p_post:.3f})  ← 应混匀')
+                  f'校正后 PCA · batch  (p={p_b_post:.3f})')
 
     # (0,2) 校正后 PCA 按 BMI
     scatter_group(ax[0, 2], pcs_post[:, 0], pcs_post[:, 1], meta['BMI_group'].values, BMI_COLORS,
                   f'PC1 ({var_post[0]:.1f}%)', f'PC2 ({var_post[1]:.1f}%)',
                   f'校正后 PCA · BMI  (PERMANOVA p={p_bmi:.3f})')
 
-    # (1,0) PLS-DA
+    # (1,0) PLS-DA scores
     scatter_group(ax[1, 0], pls['t'][:, 0], pls['t'][:, 1], meta['BMI_group'].values, BMI_COLORS,
                   f't1 (R²X={pls["r2x_per_comp"][0]:.2f})',
                   f't2 (R²X={pls["r2x_per_comp"][1]:.2f})',
                   f'PLS-DA scores  R²Y={pls["r2y"]:.3f}')
 
-    # (1,1) OPLS-DA
+    # (1,1) OPLS-DA scores
     scatter_group(ax[1, 1], op['t_pred'], op['t_ortho'][:, 0], meta['BMI_group'].values, BMI_COLORS,
                   f't_predictive (R²X={op["r2x_pred"]:.2f})',
                   f't_orthogonal (R²X={op["r2x_ortho"]:.2f})',
@@ -280,10 +302,14 @@ def diagnose_one(tier, tag, tag_short, pre_path, post_path):
 
     return {
         'tier': tier,
-        'PERMANOVA年份_校正前_F': round(F_pre, 3),
-        'PERMANOVA年份_校正前_p': round(p_pre, 4),
-        'PERMANOVA年份_校正后_F': round(F_post, 3),
-        'PERMANOVA年份_校正后_p': round(p_post, 4),
+        'PERMANOVA_batch_校正前_F': round(F_b_pre, 3),
+        'PERMANOVA_batch_校正前_p': round(p_b_pre, 4),
+        'PERMANOVA_batch_校正后_F': round(F_b_post, 3),
+        'PERMANOVA_batch_校正后_p': round(p_b_post, 4),
+        'PERMANOVA_year_校正前_F': round(F_y_pre, 3),
+        'PERMANOVA_year_校正前_p': round(p_y_pre, 4),
+        'PERMANOVA_year_校正后_F': round(F_y_post, 3),
+        'PERMANOVA_year_校正后_p': round(p_y_post, 4),
         'PERMANOVA_BMI_校正后_F': round(F_bmi, 3),
         'PERMANOVA_BMI_校正后_p': round(p_bmi, 4),
         'PLS-DA_R2Y': round(pls['r2y'], 3),
@@ -297,17 +323,20 @@ def diagnose_one(tier, tag, tag_short, pre_path, post_path):
 
 
 def main():
-    print('=== 06. ComBat 校正后可视化与诊断 (双轨并行) ===')
+    print('=== 06. ComBat 校正后可视化与诊断 (按上机 batch, 双轨并行) ===')
+    batch_tbl = load_batch_table()
     records = []
     records.append(diagnose_one(
         '80% 主分析', '80%主', '80main',
         PRE_DIR / 'ori_n165_filtered80_log2_pareto.xlsx',
         POST_DIR / 'ori_n165_filtered80_log2_combat_pareto.xlsx',
+        batch_tbl,
     ))
     records.append(diagnose_one(
         '50% 探索性', '50%探', '50expl',
         PRE_DIR / 'ori_n165_filtered50_log2_pareto.xlsx',
         POST_DIR / 'ori_n165_filtered50_log2_combat_pareto.xlsx',
+        batch_tbl,
     ))
     audit = pd.DataFrame(records)
     audit_path = TBL_DIR / 'post_combat_audit.csv'

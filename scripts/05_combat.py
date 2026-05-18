@@ -1,14 +1,21 @@
-"""05. ComBat 批次校正 (按采样年份, 保护 BMI_group).
+"""05. ComBat 批次校正 (按上机批次, 保护 BMI_group).
+
+【方案 D】batch 与 year 各自独立 (Cramér's V=0.074, 见 §6+10 诊断):
+  - 此处仅校正"上机批次 (injection_batch, 2 个)"——真正的技术变异
+  - 采样年份 (A19/B20/C21) 保留作 ANCOVA 协变量, 不在 ComBat 阶段抹
+    (year 是混合的年代/季节/储存效应, 强抹有误伤生物学风险)
 
 依据: Johnson, Li & Rabinovic, Biostatistics 2007.
-- batch = year (A19 / B20 / C21)
+- batch = injection_batch (1 或 2, 来自 data/01_raw/上机顺序和批次表.xlsx C18 sheet)
 - mod   = BMI_group (one-hot 哑变量) → 防止 ComBat 抹掉生物学方差
+- eb    = False  (67/73 特征 < 200, EB 假设不成立, 经验证会过度收缩, 见 §6.6)
 - 输入: log2 矩阵 (ComBat 假设近似正态)
 - 输出: 校正后的 log2 矩阵 + 同步生成 Pareto 缩放版供 PCA 使用
 
 输入:
   data/02_preprocessed/ori_n165_filtered{80,50}_log2.xlsx
   data/02_preprocessed/sample_alignment_n165.csv
+  data/01_raw/上机顺序和批次表.xlsx                                  (C18 柱 sheet)
 
 输出:
   data/03_batch_corrected/ori_n165_filtered{80,50}_log2_combat.xlsx          (ANCOVA/limma 输入)
@@ -25,6 +32,7 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 from utils.combat import combat
 
 IN_DIR = ROOT / 'data' / '02_preprocessed'
+RAW_DIR = ROOT / 'data' / '01_raw'
 OUT_DIR = ROOT / 'data' / '03_batch_corrected'
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -42,7 +50,16 @@ def pareto_scale(matrix):
                         index=matrix.index, columns=matrix.columns)
 
 
-def process_one(src_name, tag):
+def load_batch_table():
+    """读 C18 柱 sheet, 只保留 Subject 行, 返回 omx_id → batch."""
+    p = RAW_DIR / '上机顺序和批次表.xlsx'
+    df = pd.read_excel(p, sheet_name='C18柱-上机顺序和批次表', header=1, usecols=range(4))
+    df.columns = ['order', 'class', 'omx_id', 'batch']
+    df['batch'] = pd.to_numeric(df['batch'], errors='coerce').astype('Int64')
+    return df[df['class'] == 'Subject'][['omx_id', 'batch']].reset_index(drop=True)
+
+
+def process_one(src_name, tag, batch_tbl):
     print(f'\n{"="*60}')
     print(f'轨道 {tag}: {src_name}')
     df = pd.read_excel(IN_DIR / src_name)
@@ -52,22 +69,28 @@ def process_one(src_name, tag):
     n_feat, n_samp = matrix.shape
     print(f'  形状: {n_feat} 代谢物 x {n_samp} 样本')
 
-    # 元信息: year (batch) + BMI (mod)
-    meta = pd.DataFrame({'omx_id': sample_cols})
-    meta = meta.merge(mp[['omx_id', 'BMI_group']], on='omx_id', how='left')
+    # 元信息: batch (校正变量) + BMI (生物学保护)
+    meta = (pd.DataFrame({'omx_id': sample_cols})
+              .merge(mp[['omx_id', 'BMI_group']], on='omx_id', how='left')
+              .merge(batch_tbl, on='omx_id', how='left'))
     meta['year'] = meta['omx_id'].str[:3]
-    print(f"  批次 (year): {meta['year'].value_counts().to_dict()}")
+    miss = int(meta['batch'].isna().sum())
+    if miss > 0:
+        raise RuntimeError(f'{miss} 样本批次缺失, 无法 ComBat')
+    print(f"  上机批次 (batch): {meta['batch'].value_counts().sort_index().to_dict()}")
+    print(f"  采样年份 (year, 留作 ANCOVA 协变量, 不在此抹): {meta['year'].value_counts().sort_index().to_dict()}")
     print(f"  生物学保护 (BMI): {meta['BMI_group'].value_counts().to_dict()}")
 
     # mod = BMI 哑变量 (单列即可, 二分类)
     mod = pd.get_dummies(meta['BMI_group'], drop_first=True, dtype=float)
 
     # === ComBat ===
-    # eb=False: 67/73 个特征太少, EB 会过度收缩 (诊断证实保留率 <50%).
+    # eb=False: 67/73 个特征太少, EB 会过度收缩 (诊断证实保留率 <50%, 见 §6.6).
     # 用经典 location-scale 校正 (直接用各批次均值/方差估计, 不做 EB 收缩).
-    print(f'  --- 跑 ComBat (batch=year, mod=BMI_group, eb=False) ---')
+    print(f'  --- 跑 ComBat (batch=injection_batch, mod=BMI_group, eb=False) ---')
     pre_var_total = float((matrix.values ** 2).sum())
-    corrected = combat(matrix, batch=meta['year'].values, mod=mod.values, eb=False)
+    corrected = combat(matrix, batch=meta['batch'].astype(str).values,
+                       mod=mod.values, eb=False)
     post_var_total = float((corrected.values ** 2).sum())
     print(f'  全局方差: {pre_var_total:.2f} -> {post_var_total:.2f} '
           f'(变化 {(post_var_total - pre_var_total) / pre_var_total * 100:+.2f}%)')
@@ -101,10 +124,14 @@ def process_one(src_name, tag):
 
 
 def main():
-    print('=== 05. ComBat 批次校正 (双轨并行) ===')
+    print('=== 05. ComBat 批次校正 (按上机批次, 双轨并行) ===')
+    batch_tbl = load_batch_table()
+    print(f'C18 柱 Subject 批次表: {len(batch_tbl)} 行, '
+          f'批次分布 {batch_tbl["batch"].value_counts().sort_index().to_dict()}')
+
     records = []
-    records.append(process_one('ori_n165_filtered80_log2.xlsx', '80% 主分析'))
-    records.append(process_one('ori_n165_filtered50_log2.xlsx', '50% 探索性'))
+    records.append(process_one('ori_n165_filtered80_log2.xlsx', '80% 主分析', batch_tbl))
+    records.append(process_one('ori_n165_filtered50_log2.xlsx', '50% 探索性', batch_tbl))
 
     audit = pd.DataFrame(records)
     audit_path = OUT_DIR / 'combat_audit.csv'

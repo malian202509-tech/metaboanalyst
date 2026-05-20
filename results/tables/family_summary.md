@@ -10,10 +10,10 @@
 | **AA-COX** | 23 | 22 | 0 | 1 |
 | **AA-CYP/sEH** | 8 | 8 | 0 | 1 |
 | **AA-LOX** | 10 | 8 | 1 | 1 |
-| **EPA/DHA/DPA-oxylipin** | 15 | 13 | 1 | 1 |
 | **Endocannabinoid** | 2 | 2 | 0 | 0 |
 | **Free PUFA** | 5 | 5 | 0 | 0 |
 | **LA-oxylipin** | 10 | 9 | 0 | 0 |
+| **ω-3 PUFA oxylipins** | 15 | 13 | 1 | 1 |
 
 ## 各家族详细成员
 
@@ -73,26 +73,6 @@
 | `LTB4` | Leukotriene | AA | 5-LOX/LTA4-H | 5 | none | - | - | - |
 | `LTE4` | Leukotriene | AA | 5-LOX/LTC4-syn | 5 | none | - | - | - |
 
-### EPA/DHA/DPA-oxylipin  (15 个)
-
-| short | family_sub | substrate | enzyme | ev | non_enz | in_80 | cand_80 | cand_50 |
-|---|---|---|---|---|---|---|---|---|
-| `19,20-DiHDPA` | DiHDPA (DPA) | DPA | sEH | 5 | none | ✓ | ✓ | - |
-| `19,20-EpDPA` | EpDPA (DPA) | DPA | CYP-Epo | 5 | none | ✓ | ✓ | - |
-| `14-HDoHE` | HDoHE (DHA) | DHA | 12-LOX (maresin前体) | 4 | minor | ✓ | ✓ | - |
-| `10-HDoHE` | HDoHE-non-enz (DHA) | DHA | Non-enzymatic (radical) | 1 | near-exclusive | ✓ | ✓ | - |
-| `11-HDoHE` | HDoHE-non-enz (DHA) | DHA | Non-enzymatic (radical) | 1 | near-exclusive | ✓ | ✓ | - |
-| `13-HDoHE` | HDoHE-non-enz (DHA) | DHA | Non-enzymatic (radical) | 1 | near-exclusive | ✓ | ✓ | - |
-| `16-HDoHE` | HDoHE-non-enz (DHA) | DHA | Non-enzymatic (radical) | 2 | dominant | ✓ | ✓ | - |
-| `7-HDoHE` | HDoHE-non-enz (DHA) | DHA | Non-enzymatic (radical) | 1 | near-exclusive | ✓ | ✓ | - |
-| `8-HDoHE` | HDoHE-non-enz (DHA) | DHA | Non-enzymatic (radical) | 1 | near-exclusive | - | - | - |
-| `20-HDoHE` | HDoHE-ω (DHA) | DHA | CYP4 (ω-3) | 4 | minor | ✓ | ★ | ★ |
-| `11-HEPE` | HEPE (EPA) | EPA | 11R-LOX/Auto-ox | 2 | dominant | - | - | - |
-| `12-HEPE` | HEPE (EPA) | EPA | 12-LOX | 4 | minor | ✓ | ✓ | - |
-| `15-HpEPE` | HpEPE (EPA) | EPA | 15-LOX | 4 | minor | ✓ | ✓ | - |
-| `PGF3α` | PG-3 (EPA) | EPA | COX | 5 | none | ✓ | ✓ | - |
-| `TXB3` | TX-3 (EPA) | EPA | COX/TXA-syn | 5 | none | ✓ | ✓ | - |
-
 ### Endocannabinoid  (2 个)
 
 | short | family_sub | substrate | enzyme | ev | non_enz | in_80 | cand_80 | cand_50 |
@@ -124,6 +104,26 @@
 | `9-HpODE` | HpODE | LA | 9-LOX/Auto-ox | 2 | dominant | - | - | - |
 | `13-oxoODE` | oxoODE | LA | 13-PGR/Auto-ox | 3 | substantial | ✓ | ✓ | - |
 | `9-oxoODE` | oxoODE | LA | 13-PGR/Auto-ox | 3 | substantial | ✓ | ✓ | - |
+
+### ω-3 PUFA oxylipins  (15 个)
+
+| short | family_sub | substrate | enzyme | ev | non_enz | in_80 | cand_80 | cand_50 |
+|---|---|---|---|---|---|---|---|---|
+| `19,20-DiHDPA` | DiHDPA (DPA) | DPA | sEH | 5 | none | ✓ | ✓ | - |
+| `19,20-EpDPA` | EpDPA (DPA) | DPA | CYP-Epo | 5 | none | ✓ | ✓ | - |
+| `14-HDoHE` | HDoHE (DHA) | DHA | 12-LOX (maresin前体) | 4 | minor | ✓ | ✓ | - |
+| `10-HDoHE` | HDoHE-non-enz (DHA) | DHA | Non-enzymatic (radical) | 1 | near-exclusive | ✓ | ✓ | - |
+| `11-HDoHE` | HDoHE-non-enz (DHA) | DHA | Non-enzymatic (radical) | 1 | near-exclusive | ✓ | ✓ | - |
+| `13-HDoHE` | HDoHE-non-enz (DHA) | DHA | Non-enzymatic (radical) | 1 | near-exclusive | ✓ | ✓ | - |
+| `16-HDoHE` | HDoHE-non-enz (DHA) | DHA | Non-enzymatic (radical) | 2 | dominant | ✓ | ✓ | - |
+| `7-HDoHE` | HDoHE-non-enz (DHA) | DHA | Non-enzymatic (radical) | 1 | near-exclusive | ✓ | ✓ | - |
+| `8-HDoHE` | HDoHE-non-enz (DHA) | DHA | Non-enzymatic (radical) | 1 | near-exclusive | - | - | - |
+| `20-HDoHE` | HDoHE-ω (DHA) | DHA | CYP4 (ω-3) | 4 | minor | ✓ | ★ | ★ |
+| `11-HEPE` | HEPE (EPA) | EPA | 11R-LOX/Auto-ox | 2 | dominant | - | - | - |
+| `12-HEPE` | HEPE (EPA) | EPA | 12-LOX | 4 | minor | ✓ | ✓ | - |
+| `15-HpEPE` | HpEPE (EPA) | EPA | 15-LOX | 4 | minor | ✓ | ✓ | - |
+| `PGF3α` | PG-3 (EPA) | EPA | COX | 5 | none | ✓ | ✓ | - |
+| `TXB3` | TX-3 (EPA) | EPA | COX/TXA-syn | 5 | none | ✓ | ✓ | - |
 
 ---
 **标记说明**:

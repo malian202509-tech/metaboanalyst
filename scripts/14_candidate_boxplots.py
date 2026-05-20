@@ -8,7 +8,7 @@
 候选 (50 探索轨, 按 p_limma 排序):
   1. 5,6-DiHETrE          (AA-CYP/sEH, 50 only)
   2. 12-HETrE             (AA-LOX, 在 80 主轨)
-  3. 20-HDoHE             (EPA/DHA/DPA-oxylipin, 在 80 主轨)
+  3. 20-HDoHE             (ω-3 PUFA oxylipins, 在 80 主轨)
   4. 6,15-Diketo-PGF1α    (AA-COX, 50 only)
 
 输出:
@@ -51,7 +51,7 @@ BMI_COLORS = {'正常': '#67A9CF', '超重肥胖': '#EF8A62'}
 CANDIDATES = [
     ('5,6-DiHydroxy-8Z,11Z,14Z-eicosatrienoic acid',          '5,6-DiHETrE',         'AA-CYP/sEH'),
     ('12-Hydroxy-8Z,10E,14Z-eicosatrienoic acid',             '12-HETrE',            'AA-LOX'),
-    ('20-Hydroxy-4Z,7Z,10Z,13Z,16Z,18E-docosahexaenoic acid', '20-HDoHE',            'EPA/DHA/DPA-oxylipin'),
+    ('20-Hydroxy-4Z,7Z,10Z,13Z,16Z,18E-docosahexaenoic acid', '20-HDoHE',            'ω-3 PUFA oxylipins'),
     ('6,15-Diketo-13,14-dihydro-prostaglandin F1α',           '6,15-Diketo-PGF1α',  'AA-COX'),
 ]
 

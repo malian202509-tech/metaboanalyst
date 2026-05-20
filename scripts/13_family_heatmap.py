@@ -60,7 +60,7 @@ FAMILY_ORDER = [
     'AA-COX',
     'AA-LOX',
     'AA-CYP/sEH',
-    'EPA/DHA/DPA-oxylipin',
+    'ω-3 PUFA oxylipins',
 ]
 FAMILY_COLORS = {
     'Free PUFA':            '#A0A0A0',
@@ -69,7 +69,7 @@ FAMILY_COLORS = {
     'AA-COX':               '#FB6A4A',
     'AA-LOX':               '#FD8D3C',
     'AA-CYP/sEH':           '#6BAED6',
-    'EPA/DHA/DPA-oxylipin': '#41AB5D',
+    'ω-3 PUFA oxylipins': '#41AB5D',
 }
 BMI_COLORS = {'正常': '#67A9CF', '超重肥胖': '#EF8A62'}
 
@@ -142,113 +142,118 @@ def build_matrix(df, sample_cols, s2g, fmap_idx, anc_idx):
 
 
 def draw_heatmap(z, meta_df, col_meta, tag, title, out_path):
+    """转置布局: 特征在 x 轴, 样本在 y 轴."""
     n_feat, n_samp = z.shape
+    z_T = z.T  # (n_samp × n_feat) for plotting
     cand_col = 'is_cand_80' if tag == '80' else 'is_cand_50'
     is_cand = meta_df[cand_col].values
     fam_arr = meta_df['family_main'].values
     direction_arr = np.where(meta_df['log2FC'] > 0, '↑', '↓')
+    n_norm = int((col_meta['bmi'] == '正常').sum())
 
-    # 布局: 三个左色条(family/cand/direction) + 主热图 + colorbar; 顶部 BMI 色条
-    fig_h = max(8.0, n_feat * 0.16 + 1.5)
-    fig_w = 14.0
+    fig_w = max(14.0, n_feat * 0.26 + 2.5)
+    fig_h = max(8.0, n_samp * 0.06 + 2.5)
     fig = plt.figure(figsize=(fig_w, fig_h))
     gs = GridSpec(
-        2, 5, figure=fig,
-        height_ratios=[0.25, fig_h - 0.5],
-        width_ratios=[0.25, 0.18, 0.18, 8.5, 0.30],
-        wspace=0.04, hspace=0.02,
+        4, 3, figure=fig,
+        height_ratios=[1.2, 0.20, 0.20, fig_h - 2.4],
+        width_ratios=[0.30, fig_w - 1.6, 0.30],
+        wspace=0.03, hspace=0.04,
     )
 
-    # --- 顶部 BMI 色条 ---
-    ax_top = fig.add_subplot(gs[0, 3])
-    bmi_codes = col_meta['bmi'].map({'正常': 0, '超重肥胖': 1}).values
-    cmap_bmi = ListedColormap([BMI_COLORS['正常'], BMI_COLORS['超重肥胖']])
-    ax_top.imshow(bmi_codes[None, :], aspect='auto', cmap=cmap_bmi, interpolation='nearest')
-    ax_top.set_xticks([]); ax_top.set_yticks([])
-    # 在两组中点写 label
-    n_norm = int((col_meta['bmi'] == '正常').sum())
-    ax_top.text(n_norm / 2, 0, f'正常 (n={n_norm})', ha='center', va='center',
-                fontsize=11, color='white', fontweight='bold')
-    ax_top.text(n_norm + (n_samp - n_norm) / 2, 0, f'超重肥胖 (n={n_samp - n_norm})',
-                ha='center', va='center', fontsize=11, color='white', fontweight='bold')
-    ax_top.set_title(title, fontsize=13, fontweight='bold', pad=10)
-
-    # --- 左侧 family 色条 ---
-    ax_fam = fig.add_subplot(gs[1, 0])
+    # --- 顶部 family 色条 (横向) ---
+    ax_fam = fig.add_subplot(gs[0, 1])
     fam_to_idx = {f: i for i, f in enumerate(FAMILY_ORDER)}
     fam_codes = np.array([fam_to_idx[f] for f in fam_arr])
     cmap_fam = ListedColormap([FAMILY_COLORS[f] for f in FAMILY_ORDER])
-    ax_fam.imshow(fam_codes[:, None], aspect='auto', cmap=cmap_fam, interpolation='nearest')
+    ax_fam.imshow(fam_codes[None, :], aspect='auto', cmap=cmap_fam, interpolation='nearest')
     ax_fam.set_xticks([]); ax_fam.set_yticks([])
-    # 在每家族段中心写名字
+    # 扩展上方空间, 放窄段错开标签
+    ax_fam.set_ylim(0.5, -2.4)
+    for s in ('top', 'right', 'left', 'bottom'):
+        ax_fam.spines[s].set_visible(False)
+
+    short_y_opts = [-1.0, -1.8]  # 上下两层错开
+    short_idx = 0
     for f in FAMILY_ORDER:
         positions = np.where(fam_arr == f)[0]
-        if len(positions) == 0: continue
+        if len(positions) == 0:
+            continue
         ctr = positions.mean()
-        ax_fam.text(0, ctr, f, ha='center', va='center',
-                    rotation=90, fontsize=8.5, color='black', fontweight='bold')
+        width = len(positions)
+        # 估算: 每字符约占 0.45 个特征宽度; 装得下就内置, 装不下就上方错开
+        if width >= len(f) * 0.45:
+            fs = 9 if width >= 6 else 8
+            ax_fam.text(ctr, 0, f, ha='center', va='center',
+                        fontsize=fs, color='black', fontweight='bold')
+        else:
+            y_off = short_y_opts[short_idx % 2]
+            short_idx += 1
+            ax_fam.text(ctr, y_off, f, ha='center', va='bottom',
+                        fontsize=8.5, color='black', fontweight='bold')
+            ax_fam.plot([ctr, ctr], [y_off + 0.1, -0.5],
+                        color='#555555', lw=0.6, alpha=0.7)
+    ax_fam.set_title(title, fontsize=13, fontweight='bold', pad=18)
 
-    # --- 候选标记 (★ 用纯色块) ---
+    # --- 候选 ★ 色条 ---
     ax_cand = fig.add_subplot(gs[1, 1])
     cand_codes = is_cand.astype(int)
     cmap_cand = ListedColormap(['#F5F5F5', '#1A1A1A'])
-    ax_cand.imshow(cand_codes[:, None], aspect='auto', cmap=cmap_cand, interpolation='nearest')
+    ax_cand.imshow(cand_codes[None, :], aspect='auto', cmap=cmap_cand, interpolation='nearest')
     ax_cand.set_xticks([]); ax_cand.set_yticks([])
     for i, c in enumerate(is_cand):
         if c:
-            ax_cand.text(0, i, '★', ha='center', va='center',
+            ax_cand.text(i, 0, '★', ha='center', va='center',
                          fontsize=10, color='gold', fontweight='bold')
 
     # --- 方向 ↑↓ ---
-    ax_dir = fig.add_subplot(gs[1, 2])
-    dir_codes = (meta_df['log2FC'].values > 0).astype(int)  # 0=down,1=up
-    cmap_dir = ListedColormap(['#3182BD', '#DE2D26'])  # blue ↓ / red ↑
-    ax_dir.imshow(dir_codes[:, None], aspect='auto', cmap=cmap_dir, interpolation='nearest')
+    ax_dir = fig.add_subplot(gs[2, 1])
+    dir_codes = (meta_df['log2FC'].values > 0).astype(int)
+    cmap_dir = ListedColormap(['#3182BD', '#DE2D26'])
+    ax_dir.imshow(dir_codes[None, :], aspect='auto', cmap=cmap_dir, interpolation='nearest')
     ax_dir.set_xticks([]); ax_dir.set_yticks([])
     for i, d in enumerate(direction_arr):
-        ax_dir.text(0, i, d, ha='center', va='center',
+        ax_dir.text(i, 0, d, ha='center', va='center',
                     fontsize=8, color='white', fontweight='bold')
 
-    # --- 主 heatmap ---
-    ax = fig.add_subplot(gs[1, 3])
-    im = ax.imshow(z.values, aspect='auto', cmap='RdBu_r', vmin=-Z_CLIP, vmax=Z_CLIP,
-                   interpolation='nearest')
-    ax.set_xticks([]); ax.set_yticks(range(n_feat))
-    # 行标签 (short_label, 候选加 ★ 前缀)
-    ylabels = []
-    for i, r in meta_df.iterrows():
-        prefix = '★ ' if (r[cand_col]) else '  '
-        ylabels.append(f'{prefix}{r["short"]}')
-    ax.set_yticklabels(ylabels, fontsize=7.5)
-    # 候选 label 加粗加色
-    for tick, c in zip(ax.get_yticklabels(), is_cand):
+    # --- 左侧 BMI 色条 (纵向) ---
+    ax_bmi = fig.add_subplot(gs[3, 0])
+    bmi_codes = col_meta['bmi'].map({'正常': 0, '超重肥胖': 1}).values
+    cmap_bmi = ListedColormap([BMI_COLORS['正常'], BMI_COLORS['超重肥胖']])
+    ax_bmi.imshow(bmi_codes[:, None], aspect='auto', cmap=cmap_bmi, interpolation='nearest')
+    ax_bmi.set_xticks([]); ax_bmi.set_yticks([])
+    ax_bmi.text(0, n_norm / 2, f'正常 (n={n_norm})', ha='center', va='center',
+                fontsize=11, color='white', fontweight='bold', rotation=90)
+    ax_bmi.text(0, n_norm + (n_samp - n_norm) / 2, f'超重肥胖 (n={n_samp - n_norm})',
+                ha='center', va='center', fontsize=11, color='white', fontweight='bold', rotation=90)
+
+    # --- 主 heatmap (samples × features) ---
+    ax = fig.add_subplot(gs[3, 1])
+    im = ax.imshow(z_T.values, aspect='auto', cmap='RdBu_r',
+                   vmin=-Z_CLIP, vmax=Z_CLIP, interpolation='nearest')
+    ax.set_yticks([])
+    ax.set_xticks(range(n_feat))
+    xlabels = [f'{"★ " if r[cand_col] else ""}{r["short"]}'
+               for _, r in meta_df.iterrows()]
+    ax.set_xticklabels(xlabels, fontsize=9, rotation=90, ha='center')
+    for tick, c in zip(ax.get_xticklabels(), is_cand):
         if c:
             tick.set_fontweight('bold')
             tick.set_color('#D62728')
 
-    # 家族分界线 (横线)
-    fam_change = np.where(np.array([fam_arr[i] != fam_arr[i-1] for i in range(1, n_feat)]))[0]
+    # 家族分界 (竖线)
+    fam_change = np.where(np.array([fam_arr[i] != fam_arr[i-1]
+                                    for i in range(1, n_feat)]))[0]
     for boundary in fam_change:
-        ax.axhline(boundary + 0.5, color='black', lw=0.8, alpha=0.6)
-    # BMI 组分界线 (竖线)
-    ax.axvline(n_norm - 0.5, color='black', lw=1.2, alpha=0.8)
+        ax.axvline(boundary + 0.5, color='black', lw=0.8, alpha=0.6)
+    # BMI 组分界 (横线)
+    ax.axhline(n_norm - 0.5, color='black', lw=1.2, alpha=0.8)
 
     # --- colorbar ---
-    ax_cb = fig.add_subplot(gs[1, 4])
+    ax_cb = fig.add_subplot(gs[3, 2])
     cb = plt.colorbar(im, cax=ax_cb)
     cb.set_label('z-score (per-feature)', fontsize=10)
 
-    # 图例 (家族 + 候选 + 方向) — 放右下角
-    legend_handles = [mpatches.Patch(color=FAMILY_COLORS[f], label=f) for f in FAMILY_ORDER]
-    legend_handles += [
-        mpatches.Patch(color='#DE2D26', label='↑ 超重肥胖 > 正常'),
-        mpatches.Patch(color='#3182BD', label='↓ 超重肥胖 < 正常'),
-        mpatches.Patch(color='gold', label='★ 差异候选 (p_limma<0.05, |FC|≥1.2, robust)'),
-    ]
-    fig.legend(handles=legend_handles, loc='lower center', ncol=5, fontsize=8.5,
-               bbox_to_anchor=(0.5, -0.005), frameon=False)
-
-    plt.subplots_adjust(left=0.04, right=0.96, top=0.96, bottom=0.06)
     plt.savefig(out_path, dpi=300, bbox_inches='tight')
     plt.close()
     print(f'  ✓ {out_path.relative_to(ROOT)}')
@@ -264,7 +269,7 @@ def main():
         df, sample_cols, s2g, fmap_idx, anc_idx = load_data(tag)
         z, meta_df, col_meta = build_matrix(df, sample_cols, s2g, fmap_idx, anc_idx)
         out_path = FIG_DIR / f'family_heatmap_{"80main" if tag == "80" else "50expl"}.png'
-        title = f'Family-grouped oxylipin heatmap — {label}\n(z-score per feature, ComBat-by-batch corrected)'
+        title = 'Family-grouped oxylipin heatmap'
         draw_heatmap(z, meta_df, col_meta, tag, title, out_path)
 
         # 审计行

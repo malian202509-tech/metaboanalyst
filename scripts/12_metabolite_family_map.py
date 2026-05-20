@@ -9,7 +9,7 @@
     4. AA-LOX             : HETE (5/8/11/12/15-LOX) + LT (5-LOX)
     5. AA-CYP/sEH         : HETrE + EpETrE + DiHETrE + 16/18-HETE (ω羟化)
     6. LA-oxylipin        : HODE/oxoODE/HpODE + EpOME/DiHOME
-    7. EPA/DHA/DPA-oxylipin : HEPE/HDoHE/PG3/TX3/EpDPA/DiHDPA (ω3 派生)
+    7. ω-3 PUFA oxylipins : HEPE/HDoHE/PG3/TX3/EpDPA/DiHDPA (ω3 派生)
 
 子家族 (family_sub) + 上游底物 (substrate) + 主导酶系 (enzyme) 是机制层注释,
 供酶活性比值 (§13) 和 GSEA-like 富集 (§14) 直接使用.
@@ -133,25 +133,25 @@ FAMILY_MAP = {
     '9,10-DiHydroxy-12Z-octadecenoic acid':                                                ('LA-oxylipin', 'DiHOME (diol)',          'LA',  'sEH',                 '9,10-DiHOME',   5, 'none'),
     '12,13 -DiHydroxy-9Z-octadecenoic acid':                                               ('LA-oxylipin', 'DiHOME (diol)',          'LA',  'sEH',                 '12,13-DiHOME',  5, 'none'),
 
-    # === 7. EPA/DHA/DPA-oxylipin (ω3 系列) ===
+    # === 7. ω-3 PUFA oxylipins (ω3 系列) ===
     # EPA
-    '12-Hydroxy-5,8,10,14,17-eicosapentaenoic acid':                                       ('EPA/DHA/DPA-oxylipin', 'HEPE (EPA)',     'EPA', '12-LOX',              '12-HEPE',       4, 'minor'),
-    '15-Hydroperoxy-5,8,11,14,17-eicosapentaenoic acid':                                   ('EPA/DHA/DPA-oxylipin', 'HpEPE (EPA)',    'EPA', '15-LOX',              '15-HpEPE',      4, 'minor'),
-    '11-Hydroxy- 5Z,8Z,12E,14Z,17Z-eicosapentaenoic acid':                                 ('EPA/DHA/DPA-oxylipin', 'HEPE (EPA)',     'EPA', '11R-LOX/Auto-ox',     '11-HEPE',       2, 'dominant'),
-    'Prostaglandin F3α':                                                                   ('EPA/DHA/DPA-oxylipin', 'PG-3 (EPA)',     'EPA', 'COX',                 'PGF3α',         5, 'none'),
-    'Thromboxane B3':                                                                      ('EPA/DHA/DPA-oxylipin', 'TX-3 (EPA)',     'EPA', 'COX/TXA-syn',         'TXB3',          5, 'none'),
+    '12-Hydroxy-5,8,10,14,17-eicosapentaenoic acid':                                       ('ω-3 PUFA oxylipins', 'HEPE (EPA)',     'EPA', '12-LOX',              '12-HEPE',       4, 'minor'),
+    '15-Hydroperoxy-5,8,11,14,17-eicosapentaenoic acid':                                   ('ω-3 PUFA oxylipins', 'HpEPE (EPA)',    'EPA', '15-LOX',              '15-HpEPE',      4, 'minor'),
+    '11-Hydroxy- 5Z,8Z,12E,14Z,17Z-eicosapentaenoic acid':                                 ('ω-3 PUFA oxylipins', 'HEPE (EPA)',     'EPA', '11R-LOX/Auto-ox',     '11-HEPE',       2, 'dominant'),
+    'Prostaglandin F3α':                                                                   ('ω-3 PUFA oxylipins', 'PG-3 (EPA)',     'EPA', 'COX',                 'PGF3α',         5, 'none'),
+    'Thromboxane B3':                                                                      ('ω-3 PUFA oxylipins', 'TX-3 (EPA)',     'EPA', 'COX/TXA-syn',         'TXB3',          5, 'none'),
     # DHA — 注意 16-HDoHE 2026-05-19 重归为非酶 (见顶部注释)
-    '14-Hydroxy-4Z,7Z,10Z,12E,16Z,19Z-docosahexaenoic acid':                               ('EPA/DHA/DPA-oxylipin', 'HDoHE (DHA)',    'DHA', '12-LOX (maresin前体)','14-HDoHE',     4, 'minor'),
-    '8-Hydroxy-4Z,6E,10Z,13Z,16Z,19Z-docosahexaenoic acid':                                ('EPA/DHA/DPA-oxylipin', 'HDoHE-non-enz (DHA)', 'DHA', 'Non-enzymatic (radical)', '8-HDoHE', 1, 'near-exclusive'),
-    '10-Hydroxy-4Z,7Z,11E,13Z,16Z,19Z-docosahexaenoic acid':                               ('EPA/DHA/DPA-oxylipin', 'HDoHE-non-enz (DHA)', 'DHA', 'Non-enzymatic (radical)', '10-HDoHE', 1, 'near-exclusive'),
-    '11-Hydroxy-4Z,7Z,9E,13Z,16Z,19Z-docosahexaenoic acid':                                ('EPA/DHA/DPA-oxylipin', 'HDoHE-non-enz (DHA)', 'DHA', 'Non-enzymatic (radical)', '11-HDoHE', 1, 'near-exclusive'),
-    '13-Hydroxy-4Z,7Z,10Z,14E,16Z,19Z-docosahexaenoic acid':                               ('EPA/DHA/DPA-oxylipin', 'HDoHE-non-enz (DHA)', 'DHA', 'Non-enzymatic (radical)', '13-HDoHE', 1, 'near-exclusive'),
-    '7-Hydroxy-4Z,8E,10Z,13Z,16Z,19Z-docosahexaenoic acid':                                ('EPA/DHA/DPA-oxylipin', 'HDoHE-non-enz (DHA)', 'DHA', 'Non-enzymatic (radical)', '7-HDoHE',  1, 'near-exclusive'),
-    '20-Hydroxy-4Z,7Z,10Z,13Z,16Z,18E-docosahexaenoic acid':                               ('EPA/DHA/DPA-oxylipin', 'HDoHE-ω (DHA)',  'DHA', 'CYP4 (ω-3)',          '20-HDoHE',      4, 'minor'),
-    '16-Hydroxy-4Z,7Z,10Z,13Z,17E,19Z-docosahexaenoic acid':                               ('EPA/DHA/DPA-oxylipin', 'HDoHE-non-enz (DHA)', 'DHA', 'Non-enzymatic (radical)', '16-HDoHE', 2, 'dominant'),
+    '14-Hydroxy-4Z,7Z,10Z,12E,16Z,19Z-docosahexaenoic acid':                               ('ω-3 PUFA oxylipins', 'HDoHE (DHA)',    'DHA', '12-LOX (maresin前体)','14-HDoHE',     4, 'minor'),
+    '8-Hydroxy-4Z,6E,10Z,13Z,16Z,19Z-docosahexaenoic acid':                                ('ω-3 PUFA oxylipins', 'HDoHE-non-enz (DHA)', 'DHA', 'Non-enzymatic (radical)', '8-HDoHE', 1, 'near-exclusive'),
+    '10-Hydroxy-4Z,7Z,11E,13Z,16Z,19Z-docosahexaenoic acid':                               ('ω-3 PUFA oxylipins', 'HDoHE-non-enz (DHA)', 'DHA', 'Non-enzymatic (radical)', '10-HDoHE', 1, 'near-exclusive'),
+    '11-Hydroxy-4Z,7Z,9E,13Z,16Z,19Z-docosahexaenoic acid':                                ('ω-3 PUFA oxylipins', 'HDoHE-non-enz (DHA)', 'DHA', 'Non-enzymatic (radical)', '11-HDoHE', 1, 'near-exclusive'),
+    '13-Hydroxy-4Z,7Z,10Z,14E,16Z,19Z-docosahexaenoic acid':                               ('ω-3 PUFA oxylipins', 'HDoHE-non-enz (DHA)', 'DHA', 'Non-enzymatic (radical)', '13-HDoHE', 1, 'near-exclusive'),
+    '7-Hydroxy-4Z,8E,10Z,13Z,16Z,19Z-docosahexaenoic acid':                                ('ω-3 PUFA oxylipins', 'HDoHE-non-enz (DHA)', 'DHA', 'Non-enzymatic (radical)', '7-HDoHE',  1, 'near-exclusive'),
+    '20-Hydroxy-4Z,7Z,10Z,13Z,16Z,18E-docosahexaenoic acid':                               ('ω-3 PUFA oxylipins', 'HDoHE-ω (DHA)',  'DHA', 'CYP4 (ω-3)',          '20-HDoHE',      4, 'minor'),
+    '16-Hydroxy-4Z,7Z,10Z,13Z,17E,19Z-docosahexaenoic acid':                               ('ω-3 PUFA oxylipins', 'HDoHE-non-enz (DHA)', 'DHA', 'Non-enzymatic (radical)', '16-HDoHE', 2, 'dominant'),
     # DPA
-    '19(20)-Epoxy-4Z,7Z,10Z,13Z,16Z-docosapentaenoic acid':                                ('EPA/DHA/DPA-oxylipin', 'EpDPA (DPA)',    'DPA', 'CYP-Epo',             '19,20-EpDPA',   5, 'none'),
-    '19,20-DiHydroxy-4Z,7Z,10Z,13Z,16Z-docosapentaenoic acid':                             ('EPA/DHA/DPA-oxylipin', 'DiHDPA (DPA)',   'DPA', 'sEH',                 '19,20-DiHDPA',  5, 'none'),
+    '19(20)-Epoxy-4Z,7Z,10Z,13Z,16Z-docosapentaenoic acid':                                ('ω-3 PUFA oxylipins', 'EpDPA (DPA)',    'DPA', 'CYP-Epo',             '19,20-EpDPA',   5, 'none'),
+    '19,20-DiHydroxy-4Z,7Z,10Z,13Z,16Z-docosapentaenoic acid':                             ('ω-3 PUFA oxylipins', 'DiHDPA (DPA)',   'DPA', 'sEH',                 '19,20-DiHDPA',  5, 'none'),
 }
 
 

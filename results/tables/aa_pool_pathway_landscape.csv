@@ -1,0 +1,35 @@
+﻿short_label,pathway,family_main,family_sub,enzyme,enzyme_evidence_level,non_enzymatic_contribution,in_main_80,log2FC,log2FC_CI_lo,log2FC_CI_hi,p_ols_hc3,p_limma,p_wilcoxon,is_robust_to_outlier,source_track
+AA,AA 母体,Free PUFA,Precursor,-,,,True,-0.0993,-0.2324,0.0338,0.143611,0.343315,0.549696,False,free_pufa
+"6,15-diketo-dh-PGF1α",COX (PG/TX),AA-COX,PGI2 metabolite,COX/PGIS/15-PGDH,5.0,none,True,0.6429,-0.1672,1.453,0.119859,0.114169,0.043991,True,80_main
+"13,14-dh-15k-PGF2α",COX (PG/TX),AA-COX,PG (metabolite),COX/15-PGDH,5.0,none,True,0.284,-0.0618,0.6298,0.107482,0.134048,0.190865,False,80_main
+12-HHT,COX (PG/TX),AA-COX,HHT (COX byproduct),COX/TXA-syn,5.0,none,True,0.2321,-0.6169,1.0812,0.59204,0.571073,0.584384,False,80_main
+PGA2,COX (PG/TX),AA-COX,Prostaglandin,COX,5.0,none,True,0.2218,-0.033,0.4766,0.087961,0.139368,0.199698,False,80_main
+11β-dh-keto-PGF2α,COX (PG/TX),AA-COX,PG (metabolite),COX/15-PGDH,5.0,none,True,0.1831,-0.2034,0.5697,0.353155,0.343167,0.282885,False,80_main
+PGJ2,COX (PG/TX),AA-COX,Prostaglandin,COX/PGD-syn,5.0,none,True,0.1826,-0.1757,0.5409,0.317912,0.366648,0.411417,False,80_main
+TXB2,COX (PG/TX),AA-COX,Thromboxane,COX/TXA-syn,5.0,none,True,0.165,0.0038,0.3261,0.044819,0.071929,0.057335,False,80_main
+PGD2,COX (PG/TX),AA-COX,Prostaglandin,COX/PGD-syn,5.0,none,True,0.1433,-0.1363,0.4229,0.315175,0.345091,0.361309,True,80_main
+δ12-PGJ2,COX (PG/TX),AA-COX,PG (dehydration),COX/PGD-syn,5.0,none,True,0.135,-0.1446,0.4146,0.34404,0.348661,0.384865,False,80_main
+15-keto-PGE2,COX (PG/TX),AA-COX,PG (metabolite),COX/15-PGDH,5.0,none,True,0.1024,-0.3267,0.5316,0.639933,0.661617,0.925666,False,80_main
+15-keto-PGF2α,COX (PG/TX),AA-COX,PG (metabolite),COX/15-PGDH,5.0,none,True,0.0789,-0.1217,0.2794,0.440851,0.451643,0.757193,True,80_main
+11β-PGE2,COX (PG/TX),AA-COX,PG (isomer),COX,5.0,none,True,0.0655,-0.1728,0.3039,0.589959,0.618413,0.675265,False,80_main
+PGE2,COX (PG/TX),AA-COX,Prostaglandin,COX/PGE-syn,5.0,none,True,0.0593,-0.1809,0.2995,0.628363,0.647632,0.62523,False,80_main
+"13,14-dh-15k-PGE2",COX (PG/TX),AA-COX,PG (metabolite),COX/15-PGDH,5.0,none,True,0.0532,-0.1554,0.2618,0.617277,0.645103,0.882199,True,80_main
+15d-PGJ2-like,COX (PG/TX),AA-COX,PG (dehydration),COX/PGD-syn,5.0,none,True,0.0469,-0.5322,0.626,0.873784,0.866369,0.320531,False,80_main
+PGF2α,COX (PG/TX),AA-COX,Prostaglandin,COX/PGF-syn,5.0,none,True,-0.1365,-0.4554,0.1823,0.401359,0.354089,0.62523,False,80_main
+12-HETrE,LOX (HETE/HETrE/LT),AA-LOX,HETrE (monohydroxy),12-LOX via HpETE,5.0,none,True,0.3239,0.0196,0.6281,0.03693,0.021229,0.037859,True,80_main
+LTB4,LOX (HETE/HETrE/LT),AA-LOX,Leukotriene,5-LOX/LTA4-H,5.0,none,False,0.3068,-0.4855,1.0991,0.447861,0.444496,0.268385,True,50_explor
+12-HETE,LOX (HETE/HETrE/LT),AA-LOX,HETE,12-LOX,4.0,minor,True,0.2845,-0.0929,0.6618,0.139531,0.133103,0.168345,False,80_main
+15-HETE,LOX (HETE/HETrE/LT),AA-LOX,HETE,15-LOX,4.0,minor,True,0.1137,-0.0935,0.3208,0.282117,0.3446,0.614904,False,80_main
+8-HETrE,LOX (HETE/HETrE/LT),AA-LOX,HETrE (monohydroxy),8-LOX/Auto-ox via HpETE,2.0,dominant,True,0.0711,-0.095,0.2372,0.401645,0.435143,0.390898,True,80_main
+LTE4,LOX (HETE/HETrE/LT),AA-LOX,Leukotriene,5-LOX/LTC4-syn,5.0,none,False,-0.4566,-2.0314,1.1182,0.56986,0.545826,0.485801,True,50_explor
+"11,12-EpETrE",CYP-Epo (EpETrE),AA-CYP/sEH,EpETrE (epoxy),CYP-Epo,5.0,none,True,0.0416,-0.1736,0.2568,0.704962,0.672323,0.465432,True,80_main
+"8,9-EpETrE",CYP-Epo (EpETrE),AA-CYP/sEH,EpETrE (epoxy),CYP-Epo,5.0,none,True,0.0238,-0.1751,0.2227,0.81463,0.813199,0.804932,True,80_main
+"5,6-DiHETrE",sEH (DiHETrE),AA-CYP/sEH,DiHETrE (diol),sEH,5.0,none,True,0.4793,-0.0883,1.0469,0.097937,0.094875,0.133112,True,80_main
+"11,12-DiHETrE",sEH (DiHETrE),AA-CYP/sEH,DiHETrE (diol),sEH,5.0,none,True,0.0271,-0.1108,0.165,0.70036,0.691447,0.260554,True,80_main
+"14,15-DiHETrE",sEH (DiHETrE),AA-CYP/sEH,DiHETrE (diol),sEH,5.0,none,True,-0.0618,-0.2053,0.0818,0.398922,0.382949,0.334998,False,80_main
+"8,9-DiHETrE",sEH (DiHETrE),AA-CYP/sEH,DiHETrE (diol),sEH,5.0,none,True,-0.1274,-0.2573,0.0026,0.054727,0.06404,0.179936,True,80_main
+18-HETE,CYP4 ω-羟化 (HETE-ω),AA-CYP/sEH,HETE-ω,CYP4,4.0,minor,True,-0.1306,-0.4605,0.1994,0.438005,0.465126,0.432562,False,80_main
+16-HETE,CYP4 ω-羟化 (HETE-ω),AA-CYP/sEH,HETE-ω,CYP4,4.0,minor,True,-0.1696,-0.4426,0.1034,0.223403,0.127018,0.931481,False,80_main
+11-HETE,非酶氧化 (auto-ox HETE),AA-LOX,HETE,11R-LOX/Auto-ox,1.0,near-exclusive,True,0.1323,-0.0091,0.2737,0.066633,0.102496,0.097061,True,80_main
+8-HETE,非酶氧化 (auto-ox HETE),AA-LOX,HETE,8-LOX/Auto-ox,1.0,near-exclusive,True,0.1153,-0.0532,0.2838,0.179705,0.213522,0.242408,False,80_main
+AEA,内源大麻素 (AEA),Endocannabinoid,N-acylethanolamine,NAPE-PLD,5.0,none,True,-0.137,-0.4249,0.1509,0.350982,0.313463,0.304752,False,80_main

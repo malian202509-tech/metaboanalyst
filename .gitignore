@@ -7,6 +7,9 @@ results/*
 !results/tables/*.csv
 !results/tables/*.md
 !results/tables/*.xlsx
+!results/metaboanalyst/
+!results/metaboanalyst/*.csv
+!results/metaboanalyst/*.md
 
 # Python caches and local environments.
 __pycache__/

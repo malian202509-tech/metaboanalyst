@@ -7,9 +7,10 @@
 
 | 家族 | 总数 | 在 80 主轨 | 80 候选 | 50 候选 |
 |---|---|---|---|---|
-| **AA-COX** | 23 | 22 | 0 | 1 |
+| **AA-COX** | 17 | 17 | 0 | 1 |
 | **AA-CYP/sEH** | 8 | 8 | 0 | 1 |
-| **AA-LOX** | 10 | 8 | 1 | 1 |
+| **AA-LOX** | 7 | 5 | 0 | 0 |
+| **DGLA-oxylipin** | 9 | 8 | 1 | 1 |
 | **Endocannabinoid** | 2 | 2 | 0 | 0 |
 | **Free PUFA** | 5 | 5 | 0 | 0 |
 | **LA-oxylipin** | 10 | 9 | 0 | 0 |
@@ -17,7 +18,7 @@
 
 ## 各家族详细成员
 
-### AA-COX  (23 个)
+### AA-COX  (17 个)
 
 | short | family_sub | substrate | enzyme | ev | non_enz | in_80 | cand_80 | cand_50 |
 |---|---|---|---|---|---|---|---|---|
@@ -31,12 +32,6 @@
 | `13,14-dh-15k-PGF2α` | PG (metabolite) | AA | COX/15-PGDH | 5 | none | ✓ | ✓ | - |
 | `15-keto-PGE2` | PG (metabolite) | AA | COX/15-PGDH | 5 | none | ✓ | ✓ | - |
 | `15-keto-PGF2α` | PG (metabolite) | AA | COX/15-PGDH | 5 | none | ✓ | ✓ | - |
-| `PGD1` | PG-1 | DGLA | COX/PGD-syn | 5 | none | ✓ | ✓ | - |
-| `PGE1` | PG-1 | DGLA | COX/PGE-syn | 5 | none | ✓ | ✓ | - |
-| `PGF1α` | PG-1 | DGLA | COX | 5 | none | ✓ | ✓ | - |
-| `13,14-dh-15k-PGE1` | PG-1 (metabolite) | DGLA | COX/15-PGDH | 5 | none | - | - | - |
-| `13,14-dh-15k-PGF1α` | PG-1 (metabolite) | DGLA | COX/15-PGDH | 5 | none | ✓ | ✓ | - |
-| `15-keto-PGE1` | PG-1 (metabolite) | DGLA | COX/15-PGDH | 5 | none | ✓ | ✓ | - |
 | `6,15-diketo-dh-PGF1α` | PGI2 metabolite | AA | COX/PGIS/15-PGDH | 5 | none | ✓ | ✓ | ★ |
 | `PGA2` | Prostaglandin | AA | COX | 5 | none | ✓ | ✓ | - |
 | `PGD2` | Prostaglandin | AA | COX/PGD-syn | 5 | none | ✓ | ✓ | - |
@@ -58,7 +53,7 @@
 | `16-HETE` | HETE-ω | AA | CYP4 | 4 | minor | ✓ | ✓ | - |
 | `18-HETE` | HETE-ω | AA | CYP4 | 4 | minor | ✓ | ✓ | - |
 
-### AA-LOX  (10 个)
+### AA-LOX  (7 个)
 
 | short | family_sub | substrate | enzyme | ev | non_enz | in_80 | cand_80 | cand_50 |
 |---|---|---|---|---|---|---|---|---|
@@ -67,11 +62,22 @@
 | `12-HETE` | HETE | AA | 12-LOX | 4 | minor | ✓ | ✓ | - |
 | `15-HETE` | HETE | AA | 15-LOX | 4 | minor | ✓ | ✓ | - |
 | `8-HETE` | HETE | AA | 8-LOX/Auto-ox | 1 | near-exclusive | ✓ | ✓ | - |
-| `12-HETrE` | HETrE (monohydroxy) | AA→ETrE | 12-LOX via HpETE | 5 | none | ✓ | ★ | ★ |
-| `15-HETrE` | HETrE (monohydroxy) | DGLA | 15-LOX | 4 | minor | ✓ | ✓ | - |
-| `8-HETrE` | HETrE (monohydroxy) | AA→ETrE | 8-LOX/Auto-ox via HpETE | 2 | dominant | ✓ | ✓ | - |
 | `LTB4` | Leukotriene | AA | 5-LOX/LTA4-H | 5 | none | - | - | - |
 | `LTE4` | Leukotriene | AA | 5-LOX/LTC4-syn | 5 | none | - | - | - |
+
+### DGLA-oxylipin  (9 个)
+
+| short | family_sub | substrate | enzyme | ev | non_enz | in_80 | cand_80 | cand_50 |
+|---|---|---|---|---|---|---|---|---|
+| `12-HETrE` | HETrE (monohydroxy) | DGLA | 12-LOX via HpETE | 5 | none | ✓ | ★ | ★ |
+| `15-HETrE` | HETrE (monohydroxy) | DGLA | 15-LOX | 4 | minor | ✓ | ✓ | - |
+| `8-HETrE` | HETrE (monohydroxy) | DGLA | 8-LOX/Auto-ox via HpETE | 2 | dominant | ✓ | ✓ | - |
+| `PGD1` | PG-1 | DGLA | COX/PGD-syn | 5 | none | ✓ | ✓ | - |
+| `PGE1` | PG-1 | DGLA | COX/PGE-syn | 5 | none | ✓ | ✓ | - |
+| `PGF1α` | PG-1 | DGLA | COX | 5 | none | ✓ | ✓ | - |
+| `13,14-dh-15k-PGE1` | PG-1 (metabolite) | DGLA | COX/15-PGDH | 5 | none | - | - | - |
+| `13,14-dh-15k-PGF1α` | PG-1 (metabolite) | DGLA | COX/15-PGDH | 5 | none | ✓ | ✓ | - |
+| `15-keto-PGE1` | PG-1 (metabolite) | DGLA | COX/15-PGDH | 5 | none | ✓ | ✓ | - |
 
 ### Endocannabinoid  (2 个)
 

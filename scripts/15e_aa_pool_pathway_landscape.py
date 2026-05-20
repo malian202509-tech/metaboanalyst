@@ -40,7 +40,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 # AA 池通路分组 (顺序固定: COX → LOX → CYP-Epo → sEH → CYP4 → 非酶 → 内源大麻素 → 母体)
 PATHWAY_ORDER = [
-    'AA 母体', 'COX (PG/TX)', 'LOX (HETE/HETrE/LT)',
+    'AA 母体', 'COX (PG/TX)', 'LOX (HETE/LT)',
     'CYP-Epo (EpETrE)', 'sEH (DiHETrE)',
     'CYP4 ω-羟化 (HETE-ω)', '非酶氧化 (auto-ox HETE)',
     '内源大麻素 (AEA)',
@@ -48,7 +48,7 @@ PATHWAY_ORDER = [
 PATH_COLORS = {
     'AA 母体':             '#666666',
     'COX (PG/TX)':         '#D62728',
-    'LOX (HETE/HETrE/LT)': '#2CA02C',
+    'LOX (HETE/LT)':       '#2CA02C',
     'CYP-Epo (EpETrE)':    '#1F77B4',
     'sEH (DiHETrE)':       '#9467BD',
     'CYP4 ω-羟化 (HETE-ω)': '#17BECF',
@@ -70,11 +70,11 @@ def classify_pathway(row):
     # 2. COX 通路
     if fmain == 'AA-COX':
         return 'COX (PG/TX)'
-    # 3. LOX (HETE/HETrE + LT)
+    # 3. LOX (HETE + LT; HETrE 不在此, 已归 DGLA-oxylipin)
     if fmain == 'AA-LOX':
         if sl in ['11-HETE', '8-HETE']:
             return '非酶氧化 (auto-ox HETE)'
-        return 'LOX (HETE/HETrE/LT)'
+        return 'LOX (HETE/LT)'
     # 4-6. CYP/sEH 家族细分
     if fmain == 'AA-CYP/sEH':
         if 'EpETrE' in fsub:
@@ -96,9 +96,9 @@ def main():
     anc80 = pd.read_csv(ROOT / 'results/tables/ancova_main_80.csv')
     anc50 = pd.read_csv(ROOT / 'results/tables/ancova_main_50.csv')
 
-    # 标记 AA 池成员 (substrate = AA 或 AA→ETrE; 加上 AEA endo; 加上母体 AA)
+    # 标记 AA 池成员 (substrate = AA; 加上 AEA endo; 加上母体 AA)
     aa_pool = fmap[
-        (fmap['substrate'].isin(['AA', 'AA→ETrE'])) |
+        (fmap['substrate'] == 'AA') |
         (fmap['short_label'] == 'AEA')
     ].copy()
     aa_pool['pathway'] = aa_pool.apply(classify_pathway, axis=1)

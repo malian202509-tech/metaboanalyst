@@ -22,20 +22,20 @@
 80,enzyme,NAPE-PLD,2,0,2,67,0.06,0.0,1.0,,1.0
 80,enzyme,Non-enzymatic (radical),5,0,2,67,0.149,0.0,1.0,,1.0
 80,enzyme,sEH,7,0,2,67,0.209,0.0,1.0,,1.0
-80,family_main,AA-LOX,8,1,2,67,0.239,4.188,0.226142,"12-Hydroxy-8Z,10E,14Z-eicosatrienoic acid",1.0
+80,family_main,DGLA-oxylipin,8,1,2,67,0.239,4.188,0.226142,"12-Hydroxy-8Z,10E,14Z-eicosatrienoic acid",1.0
 80,family_main,ω-3 PUFA oxylipins,13,1,2,67,0.388,2.577,0.352782,"20-Hydroxy-4Z,7Z,10Z,13Z,16Z,18E-docosahexaenoic acid",1.0
-80,family_main,AA-COX,22,0,2,67,0.657,0.0,1.0,,1.0
+80,family_main,AA-COX,17,0,2,67,0.507,0.0,1.0,,1.0
 80,family_main,AA-CYP/sEH,8,0,2,67,0.239,0.0,1.0,,1.0
+80,family_main,AA-LOX,5,0,2,67,0.149,0.0,1.0,,1.0
 80,family_main,Endocannabinoid,2,0,2,67,0.06,0.0,1.0,,1.0
 80,family_main,Free PUFA,5,0,2,67,0.149,0.0,1.0,,1.0
 80,family_main,LA-oxylipin,9,0,2,67,0.269,0.0,1.0,,1.0
-80,substrate,AA→ETrE,2,1,2,67,0.06,16.75,0.059249,"12-Hydroxy-8Z,10E,14Z-eicosatrienoic acid",0.651739
 80,substrate,DHA,7,1,2,67,0.209,4.786,0.199457,"20-Hydroxy-4Z,7Z,10Z,13Z,16Z,18E-docosahexaenoic acid",1.0
+80,substrate,DGLA,8,1,2,67,0.239,4.188,0.226142,"12-Hydroxy-8Z,10E,14Z-eicosatrienoic acid",1.0
 80,substrate,20:2,1,0,2,67,0.03,0.0,1.0,,1.0
 80,substrate,AA,30,0,2,67,0.896,0.0,1.0,,1.0
 80,substrate,ALA,1,0,2,67,0.03,0.0,1.0,,1.0
 80,substrate,AdrA,1,0,2,67,0.03,0.0,1.0,,1.0
-80,substrate,DGLA,6,0,2,67,0.179,0.0,1.0,,1.0
 80,substrate,DPA,2,0,2,67,0.06,0.0,1.0,,1.0
 80,substrate,EPA,4,0,2,67,0.119,0.0,1.0,,1.0
 80,substrate,LA,12,0,2,67,0.358,0.0,1.0,,1.0
@@ -66,19 +66,19 @@
 50,enzyme,NAPE-PLD,2,0,4,73,0.11,0.0,1.0,,1.0
 50,enzyme,Non-enzymatic (radical),6,0,4,73,0.329,0.0,1.0,,1.0
 50,family_main,AA-CYP/sEH,8,1,4,73,0.438,2.281,0.377966,"5,6-DiHydroxy-8Z,11Z,14Z-eicosatrienoic acid",1.0
-50,family_main,AA-LOX,10,1,4,73,0.548,1.825,0.45273,"12-Hydroxy-8Z,10E,14Z-eicosatrienoic acid",1.0
+50,family_main,DGLA-oxylipin,9,1,4,73,0.493,2.028,0.416245,"12-Hydroxy-8Z,10E,14Z-eicosatrienoic acid",1.0
 50,family_main,ω-3 PUFA oxylipins,15,1,4,73,0.822,1.217,0.6102,"20-Hydroxy-4Z,7Z,10Z,13Z,16Z,18E-docosahexaenoic acid",1.0
-50,family_main,AA-COX,23,1,4,73,1.26,0.793,0.788411,"6,15-Diketo-13,14-dihydro-prostaglandin F1α",1.0
+50,family_main,AA-COX,17,1,4,73,0.932,1.074,0.662551,"6,15-Diketo-13,14-dihydro-prostaglandin F1α",1.0
+50,family_main,AA-LOX,7,0,4,73,0.384,0.0,1.0,,1.0
 50,family_main,Endocannabinoid,2,0,4,73,0.11,0.0,1.0,,1.0
 50,family_main,Free PUFA,5,0,4,73,0.274,0.0,1.0,,1.0
 50,family_main,LA-oxylipin,10,0,4,73,0.548,0.0,1.0,,1.0
-50,substrate,AA→ETrE,2,1,4,73,0.11,9.125,0.107306,"12-Hydroxy-8Z,10E,14Z-eicosatrienoic acid",1.0
 50,substrate,DHA,8,1,4,73,0.438,2.281,0.377966,"20-Hydroxy-4Z,7Z,10Z,13Z,16Z,18E-docosahexaenoic acid",1.0
+50,substrate,DGLA,9,1,4,73,0.493,2.028,0.416245,"12-Hydroxy-8Z,10E,14Z-eicosatrienoic acid",1.0
 50,substrate,AA,32,2,4,73,1.753,1.141,0.593552,"5,6-DiHydroxy-8Z,11Z,14Z-eicosatrienoic acid; 6,15-Diketo-13,14-dihydro-prostaglandin F1α",1.0
 50,substrate,20:2,1,0,4,73,0.055,0.0,1.0,,1.0
 50,substrate,ALA,1,0,4,73,0.055,0.0,1.0,,1.0
 50,substrate,AdrA,1,0,4,73,0.055,0.0,1.0,,1.0
-50,substrate,DGLA,7,0,4,73,0.384,0.0,1.0,,1.0
 50,substrate,DPA,2,0,4,73,0.11,0.0,1.0,,1.0
 50,substrate,EPA,5,0,4,73,0.274,0.0,1.0,,1.0
 50,substrate,LA,13,0,4,73,0.712,0.0,1.0,,1.0

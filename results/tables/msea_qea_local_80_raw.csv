@@ -1,0 +1,6 @@
+﻿pathway_id,pathway_name,pathway_size_K,Q_obs,Q_perm_median,Q_perm_99pct,p_perm,n_up (r>0),frac_up,leading_top3_by_|r|,q_bh
+hsa00590,Arachidonic acid metabolism,34,205.3971,153.2025,410.1232,0.256674,27,0.794,"12-Hydroxy-8Z,10E,14Z-eicosatrienoic(r=+0.170); Thromboxane B2(r=+0.140); 8,9-DiHydroxy-5Z,11Z,14Z-eicosatrien(r=-0.136)",0.675932
+hsa00591,Linoleic acid metabolism,13,156.3784,130.12,684.255,0.40016,5,0.385,"9,10-Epoxy-12Z-octadecenoic acid(r=+0.114); 12,13-Epoxy-9Z-octadecenoic acid(r=+0.088); 9,10-DiHydroxy-12Z-octadecenoic acid(r=+0.074)",0.675932
+hsa00592,alpha-Linolenic acid metabolism,19,187.5049,163.8235,576.3861,0.405559,17,0.895,"20-Hydroxy-4Z,7Z,10Z,13Z,16Z,18E-doc(r=+0.164); 13-Hydroxy-4Z,7Z,10Z,14E,16Z,19Z-doc(r=+0.144); 14-Hydroxy-4Z,7Z,10Z,12E,16Z,19Z-doc(r=+0.119)",0.675932
+hsa01040,Biosynthesis of unsaturated fatty acids,5,27.6312,37.0227,257.0853,0.60324,0,0.0,Linoleic acid(r=-0.071); Linoelaidic acid(r=-0.069); Conjugated linoleic acids(r=-0.060),0.682232
+hsa04923,Regulation of lipolysis in adipocytes,3,34.8304,56.4827,350.9295,0.682232,1,0.333,Anandamide(r=-0.056); Arachidonic acid(r=-0.054); Prostaglandin E2(r=+0.045),0.682232

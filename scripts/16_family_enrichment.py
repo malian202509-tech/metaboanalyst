@@ -38,17 +38,18 @@ N_PERMUTATIONS = 10000
 RNG = np.random.default_rng(42)
 
 FAMILY_ORDER = [
-    'Free PUFA', 'Endocannabinoid', 'LA-oxylipin',
+    'Free PUFA', 'Endocannabinoid', 'LA-oxylipin', 'DGLA-oxylipin',
     'AA-COX', 'AA-LOX', 'AA-CYP/sEH', 'ω-3 PUFA oxylipins',
 ]
 FAMILY_COLORS = {
     'Free PUFA':            '#A0A0A0',
     'Endocannabinoid':      '#9E9AC8',
     'LA-oxylipin':          '#74C476',
+    'DGLA-oxylipin':        '#F0AB00',
     'AA-COX':               '#FB6A4A',
     'AA-LOX':               '#FD8D3C',
     'AA-CYP/sEH':           '#6BAED6',
-    'ω-3 PUFA oxylipins': '#41AB5D',
+    'ω-3 PUFA oxylipins':   '#41AB5D',
 }
 
 

@@ -1,0 +1,6 @@
+﻿pathway_id,pathway_name,pathway_size_K,Q_obs,Q_perm_median,Q_perm_99pct,p_perm,n_up (r>0),frac_up,leading_top3_by_|r|,q_bh
+hsa00590,Arachidonic acid metabolism,34,210.8968,144.8183,402.2919,0.20158,27,0.794,"12-Hydroxy-8Z,10E,14Z-eicosatrienoic(r=+0.179); 8,9-DiHydroxy-5Z,11Z,14Z-eicosatrien(r=-0.147); Thromboxane B2(r=+0.141)",0.587841
+hsa00592,alpha-Linolenic acid metabolism,19,181.5896,154.2725,530.5842,0.379362,16,0.842,"20-Hydroxy-4Z,7Z,10Z,13Z,16Z,18E-doc(r=+0.176); 13-Hydroxy-4Z,7Z,10Z,14E,16Z,19Z-doc(r=+0.141); 14-Hydroxy-4Z,7Z,10Z,12E,16Z,19Z-doc(r=+0.128)",0.587841
+hsa01040,Biosynthesis of unsaturated fatty acids,5,40.0403,35.4494,242.2343,0.455454,0,0.0,Linoleic acid(r=-0.095); Linoelaidic acid(r=-0.092); Conjugated linoleic acids(r=-0.081),0.587841
+hsa04923,Regulation of lipolysis in adipocytes,3,47.6692,51.4063,301.0888,0.530347,1,0.333,Anandamide(r=-0.079); Arachidonic acid(r=-0.075); Prostaglandin E2(r=+0.036),0.587841
+hsa00591,Linoleic acid metabolism,13,100.1022,117.4972,589.5,0.587841,5,0.385,"9,10-Epoxy-12Z-octadecenoic acid(r=+0.107); Linoleic acid(r=-0.095); Linoleoyl ethanolamide(r=-0.094)",0.587841

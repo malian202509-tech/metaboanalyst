@@ -2,14 +2,15 @@
 
 73 个氧化脂质 (50 探索轨为超集; 80 主轨为 67 子集) 按生物学家族分类:
 
-  7 大家族 (family_main, 论文 heatmap 分块用):
+  8 大家族 (family_main, 论文 heatmap 分块用):
     1. Endocannabinoid    : N-acylethanolamines (LEA, AEA)
     2. Free PUFA          : 前体 (AA, LA, ALA, CLA 等)
-    3. AA-COX             : PG / TX / HHT (COX 通路)
-    4. AA-LOX             : HETE (5/8/11/12/15-LOX) + LT (5-LOX)
-    5. AA-CYP/sEH         : HETrE + EpETrE + DiHETrE + 16/18-HETE (ω羟化)
-    6. LA-oxylipin        : HODE/oxoODE/HpODE + EpOME/DiHOME
-    7. ω-3 PUFA oxylipins : HEPE/HDoHE/PG3/TX3/EpDPA/DiHDPA (ω3 派生)
+    3. LA-oxylipin        : HODE/oxoODE/HpODE + EpOME/DiHOME
+    4. DGLA-oxylipin      : PG-1 (PGE1/PGD1/PGF1α 及代谢物) + HETrE (8/12/15-) — DGLA 20:3 来源, 多数抗炎
+    5. AA-COX             : PG-2 / TX-2 / HHT (COX 通路)
+    6. AA-LOX             : HETE (5/8/11/12/15-LOX) + LT (5-LOX)
+    7. AA-CYP/sEH         : EpETrE + DiHETrE + 16/18-HETE (AA 经 CYP, 骨架 20:3 由环氧化产生)
+    8. ω-3 PUFA oxylipins : HEPE/HDoHE/PG3/TX3/EpDPA/DiHDPA (ω3 派生)
 
 子家族 (family_sub) + 上游底物 (substrate) + 主导酶系 (enzyme) 是机制层注释,
 供酶活性比值 (§13) 和 GSEA-like 富集 (§14) 直接使用.
@@ -89,14 +90,14 @@ FAMILY_MAP = {
     '15-Keto prostaglandin F2α':                                                           ('AA-COX', 'PG (metabolite)',             'AA',  'COX/15-PGDH',        '15-keto-PGF2α', 5, 'none'),
     '6,15-Diketo-13,14-dihydro-prostaglandin F1α':                                         ('AA-COX', 'PGI2 metabolite',             'AA',  'COX/PGIS/15-PGDH',   '6,15-diketo-dh-PGF1α', 5, 'none'),
     '13,14-Dihydro-15-keto prostaglandin E2':                                              ('AA-COX', 'PG (metabolite)',             'AA',  'COX/15-PGDH',        '13,14-dh-15k-PGE2', 5, 'none'),
-    '15-Keto prostaglandin E1':                                                            ('AA-COX', 'PG-1 (metabolite)',           'DGLA','COX/15-PGDH',        '15-keto-PGE1',  5, 'none'),
-    '13,14-Dihydro-15-keto Prostaglandin E1':                                              ('AA-COX', 'PG-1 (metabolite)',           'DGLA','COX/15-PGDH',        '13,14-dh-15k-PGE1', 5, 'none'),
-    'Prostaglandin F1α':                                                                   ('AA-COX', 'PG-1',                        'DGLA','COX',                'PGF1α',         5, 'none'),
-    'Prostaglandin D1':                                                                    ('AA-COX', 'PG-1',                        'DGLA','COX/PGD-syn',        'PGD1',          5, 'none'),
+    '15-Keto prostaglandin E1':                                                            ('DGLA-oxylipin', 'PG-1 (metabolite)',           'DGLA','COX/15-PGDH',        '15-keto-PGE1',  5, 'none'),
+    '13,14-Dihydro-15-keto Prostaglandin E1':                                              ('DGLA-oxylipin', 'PG-1 (metabolite)',           'DGLA','COX/15-PGDH',        '13,14-dh-15k-PGE1', 5, 'none'),
+    'Prostaglandin F1α':                                                                   ('DGLA-oxylipin', 'PG-1',                        'DGLA','COX',                'PGF1α',         5, 'none'),
+    'Prostaglandin D1':                                                                    ('DGLA-oxylipin', 'PG-1',                        'DGLA','COX/PGD-syn',        'PGD1',          5, 'none'),
     '13,14-Dihydro-15-keto-pgf2α':                                                         ('AA-COX', 'PG (metabolite)',             'AA',  'COX/15-PGDH',        '13,14-dh-15k-PGF2α', 5, 'none'),
     '15-Keto prostaglandin E2':                                                            ('AA-COX', 'PG (metabolite)',             'AA',  'COX/15-PGDH',        '15-keto-PGE2',  5, 'none'),
-    '13,14-Dihydro-15-keto Prostaglandin F1α':                                             ('AA-COX', 'PG-1 (metabolite)',           'DGLA','COX/15-PGDH',        '13,14-dh-15k-PGF1α', 5, 'none'),
-    'Prostaglandin E1':                                                                    ('AA-COX', 'PG-1',                        'DGLA','COX/PGE-syn',        'PGE1',          5, 'none'),
+    '13,14-Dihydro-15-keto Prostaglandin F1α':                                             ('DGLA-oxylipin', 'PG-1 (metabolite)',           'DGLA','COX/15-PGDH',        '13,14-dh-15k-PGF1α', 5, 'none'),
+    'Prostaglandin E1':                                                                    ('DGLA-oxylipin', 'PG-1',                        'DGLA','COX/PGE-syn',        'PGE1',          5, 'none'),
     '12S-Hydroxy-5Z,8E,10E-heptadecatrienoic acid':                                        ('AA-COX', 'HHT (COX byproduct)',         'AA',  'COX/TXA-syn',        '12-HHT',        5, 'none'),
 
     # === 4. AA-LOX (HETE + HETrE + LT) ===
@@ -106,9 +107,9 @@ FAMILY_MAP = {
     '12-Hydroxy-5Z,8Z,10E,14Z-eicosatetraenoic acid':                                      ('AA-LOX', 'HETE',                        'AA',  '12-LOX',             '12-HETE',       4, 'minor'),
     'Leukotriene E4':                                                                      ('AA-LOX', 'Leukotriene',                 'AA',  '5-LOX/LTC4-syn',     'LTE4',          5, 'none'),
     'Leukotriene B4':                                                                      ('AA-LOX', 'Leukotriene',                 'AA',  '5-LOX/LTA4-H',       'LTB4',          5, 'none'),
-    '8-Hydroxy-9E,11Z,14Z-eicosatrienoic acid':                                            ('AA-LOX', 'HETrE (monohydroxy)',     'AA→ETrE','8-LOX/Auto-ox via HpETE', '8-HETrE',  2, 'dominant'),
-    '12-Hydroxy-8Z,10E,14Z-eicosatrienoic acid':                                           ('AA-LOX', 'HETrE (monohydroxy)',     'AA→ETrE','12-LOX via HpETE',        '12-HETrE', 5, 'none'),
-    '15-Hydroxy-8Z,11Z,13E-eicosatrienoic acid':                                           ('AA-LOX', 'HETrE (monohydroxy)',     'DGLA',   '15-LOX',                  '15-HETrE', 4, 'minor'),
+    '8-Hydroxy-9E,11Z,14Z-eicosatrienoic acid':                                            ('DGLA-oxylipin', 'HETrE (monohydroxy)',     'DGLA'   ,'8-LOX/Auto-ox via HpETE', '8-HETrE',  2, 'dominant'),
+    '12-Hydroxy-8Z,10E,14Z-eicosatrienoic acid':                                           ('DGLA-oxylipin', 'HETrE (monohydroxy)',     'DGLA'   ,'12-LOX via HpETE',        '12-HETrE', 5, 'none'),
+    '15-Hydroxy-8Z,11Z,13E-eicosatrienoic acid':                                           ('DGLA-oxylipin', 'HETrE (monohydroxy)',     'DGLA',   '15-LOX',                  '15-HETrE', 4, 'minor'),
     '15-Hydroxy-11Z,13E-eicosadienoic acid':                                               ('AA-LOX', 'HEDE (20:2 monohydroxy)', '20:2',   '15-LOX',                  '15-HEDE',  4, 'minor'),
 
     # === 5. AA-CYP/sEH (HETE-ω / EpETrE / DiHETrE) ===

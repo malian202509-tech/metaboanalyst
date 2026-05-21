@@ -49,14 +49,27 @@ matplotlib.rcParams['axes.unicode_minus'] = False
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'scripts'))
 
-# 直接 import 脚本 17 的 KEGG_PATHWAYS (避免重复定义)
+# 直接 import 脚本 17 的 KEGG_PATHWAYS + 脚本 19 的 asciify_name
+# (避免重复定义; importlib 不会执行 __name__ == '__main__' 块)
 import importlib.util
-spec = importlib.util.spec_from_file_location('s17', ROOT / 'scripts' / '17_kegg_enrichment.py')
-s17 = importlib.util.module_from_spec(spec)
-# 屏蔽 17 的 main() 副作用: 只取 KEGG_PATHWAYS 常量
-# (importlib 不会执行 __name__ == '__main__' 块)
-spec.loader.exec_module(s17)
-KEGG_PATHWAYS = s17.KEGG_PATHWAYS
+
+
+def _load_module(modname, path):
+    spec = importlib.util.spec_from_file_location(modname, path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+s17 = _load_module('s17', ROOT / 'scripts' / '17_kegg_enrichment.py')
+s19 = _load_module('s19', ROOT / 'scripts' / '19_metaboanalyst_export.py')
+
+# 浓度表列名已 ASCII 化 (脚本 19 的修复), 因此通路成员匹配也需 ASCII 化
+asciify_name = s19.asciify_name
+KEGG_PATHWAYS = {
+    pid: {**pdef, 'members': [asciify_name(m) for m in pdef['members']]}
+    for pid, pdef in s17.KEGG_PATHWAYS.items()
+}
 
 MA_DIR = ROOT / 'results' / 'metaboanalyst'
 TABLES = ROOT / 'results' / 'tables'

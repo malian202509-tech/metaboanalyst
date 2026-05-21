@@ -26,6 +26,22 @@
 - Label: `Normal` (n=120) / `Overweight_Obese` (n=45)
 - 数值: log2 转换后 (ComBat by injection_batch + 协变量残差化)
 
+## ★ 代谢物名 ASCII 化 (必读)
+
+MetaboAnalyst 拒绝含特殊字符 (拉丁字母、希腊字母 α/β/γ/δ/ω) 的代谢物名,
+报错: *"No special letters (i.e. Latin, Greek) are allowed in feature names!"*
+
+因此本目录浓度表的列名 (代谢物名) 全部经过 ASCII 化, 例:
+- `α-Linolenic acid` → `alpha-Linolenic acid`
+- `Prostaglandin F2α` → `Prostaglandin F2alpha`
+- `15-Deoxy-δ-12,14-prostaglandin D2` → `15-Deoxy-delta-12,14-prostaglandin D2`
+- `11β-13,14-Dihydro-15-keto prostaglandinF2α` →
+  `11beta-13,14-Dihydro-15-keto prostaglandinF2alpha`
+
+`id_mapping_*.csv` 同时保留 **original_name + ascii_name** 两列, 作为本地脚本
+(用原名) 和 MetaboAnalyst (用 ASCII 名) 之间的桥梁; `asciified` 列标记是否
+实际做了替换 (审计 + reviewer 抽查用).
+
 ## 协变量残差化原理
 
 MetaboAnalyst 5.0 MSEA web 界面不直接支持协变量调整. 我们在外部对每个代谢物

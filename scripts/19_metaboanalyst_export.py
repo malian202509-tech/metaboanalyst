@@ -62,6 +62,31 @@ UNIT_COL = '浓度单位'
 
 COVARS = ['age', 'GA_decimal', 'year_A19', 'year_C21']
 
+# === MetaboAnalyst 要求 ASCII-only 的代谢物名 ===
+# 报错示例: "No special letters (i.e. Latin, Greek) are allowed in feature names!"
+# 因此把希腊字母 (α/β/γ/δ/ε/ω, Δ) 替换成 ASCII 拼写; 大小写保持.
+GREEK_TO_ASCII = {
+    'α': 'alpha', 'β': 'beta', 'γ': 'gamma', 'δ': 'delta',
+    'ε': 'epsilon', 'ω': 'omega', 'Δ': 'Delta', 'Α': 'Alpha',
+    'Β': 'Beta', 'Γ': 'Gamma',
+}
+
+
+def asciify_name(name: str) -> str:
+    """把代谢物名里的希腊字母替换为 ASCII 拼写, 其它字符不变.
+
+    例: 'α-Linolenic acid' → 'alpha-Linolenic acid'
+        'Prostaglandin F2α' → 'Prostaglandin F2alpha'
+        '15-Deoxy-δ-12,14-prostaglandin D2' → '15-Deoxy-delta-12,14-prostaglandin D2'
+        '11β-13,14-Dihydro-15-keto prostaglandinF2α' →
+            '11beta-13,14-Dihydro-15-keto prostaglandinF2alpha'
+    """
+    if not isinstance(name, str):
+        return name
+    for greek, ascii_word in GREEK_TO_ASCII.items():
+        name = name.replace(greek, ascii_word)
+    return name
+
 
 def load_covariates():
     """加载临床+对齐表, 返回以 omx_id 为索引的协变量表 (与脚本 09 同源).
@@ -121,9 +146,16 @@ def residualize(data, cov_df):
 
 
 def build_concentration_table(data_features_x_samples, cov_df, label_col='BMI_group'):
-    """构造 MetaboAnalyst 浓度表: rows=samples, col1=Sample, col2=Label, rest=metabolites."""
+    """构造 MetaboAnalyst 浓度表: rows=samples, col1=Sample, col2=Label, rest=metabolites.
+
+    代谢物名 (列名) 应用 ASCII 化 (asciify_name) 以满足 MetaboAnalyst 要求.
+    """
     samples = list(data_features_x_samples.columns)
-    table = data_features_x_samples.T.reset_index().rename(columns={'index': 'Sample'})
+    # 转置: features × samples → samples × features
+    df = data_features_x_samples.T.copy()
+    # 代谢物名 ASCII 化 (作为列名)
+    df.columns = [asciify_name(c) for c in df.columns]
+    table = df.reset_index().rename(columns={'index': 'Sample'})
     labels = cov_df.loc[samples, label_col].values
     # 英文 Label 对 MetaboAnalyst 更稳 (避免中文编码)
     label_map = {'正常': 'Normal', '超重肥胖': 'Overweight_Obese'}
@@ -132,22 +164,34 @@ def build_concentration_table(data_features_x_samples, cov_df, label_col='BMI_gr
 
 
 def build_id_mapping(meta_df):
-    """生成 ID 映射诊断表: 每个代谢物的 HMDB / KEGG ID + 缺失标记.
+    """生成 ID 映射诊断表: 每个代谢物的 HMDB / KEGG ID + ASCII 名 + 缺失标记.
 
-    输出列: Metabolite Name, HMDB ID, KEGG ID, has_HMDB, has_KEGG, recommended_input_ID
+    输出列:
+      original_name      — 原始代谢物名 (可能含希腊字母 α/β/δ)
+      ascii_name         — ASCII 化代谢物名 (用于浓度表列名 + MetaboAnalyst)
+      HMDB ID, KEGG ID
+      has_HMDB, has_KEGG
+      recommended_input_ID — 推荐 ID 形式: HMDB:xxx / KEGG:xxx / NAME:ascii_name
+      asciified          — 是否实际做了 ASCII 替换 (审计用, 便于 reviewer 抽查)
     """
     m = meta_df[['Metabolite Name', 'HMDB ID', 'KEGG ID']].copy()
+    m = m.rename(columns={'Metabolite Name': 'original_name'})
+    m['ascii_name'] = m['original_name'].apply(asciify_name)
+    m['asciified'] = m['original_name'] != m['ascii_name']
     m['has_HMDB'] = m['HMDB ID'].notna() & (m['HMDB ID'].astype(str).str.strip() != '')
     m['has_KEGG'] = m['KEGG ID'].notna() & (m['KEGG ID'].astype(str).str.strip() != '')
-    # 推荐 ID 类型: 优先 HMDB (覆盖通常更高), 其次 KEGG, 再次 name
+
     def pick_id(row):
         if row['has_HMDB']:
             return f'HMDB:{row["HMDB ID"]}'
         if row['has_KEGG']:
             return f'KEGG:{row["KEGG ID"]}'
-        return f'NAME:{row["Metabolite Name"]}'
+        return f'NAME:{row["ascii_name"]}'
     m['recommended_input_ID'] = m.apply(pick_id, axis=1)
-    return m
+
+    # 列顺序: 原名 → ASCII 名 → ID → 诊断
+    return m[['original_name', 'ascii_name', 'HMDB ID', 'KEGG ID',
+              'has_HMDB', 'has_KEGG', 'asciified', 'recommended_input_ID']]
 
 
 def write_samples_metadata(cov_df):
@@ -200,6 +244,22 @@ def write_readme():
 浓度表格式: `Sample, Label, Metabolite_1, Metabolite_2, ...`
 - Label: `Normal` (n=120) / `Overweight_Obese` (n=45)
 - 数值: log2 转换后 (ComBat by injection_batch + 协变量残差化)
+
+## ★ 代谢物名 ASCII 化 (必读)
+
+MetaboAnalyst 拒绝含特殊字符 (拉丁字母、希腊字母 α/β/γ/δ/ω) 的代谢物名,
+报错: *"No special letters (i.e. Latin, Greek) are allowed in feature names!"*
+
+因此本目录浓度表的列名 (代谢物名) 全部经过 ASCII 化, 例:
+- `α-Linolenic acid` → `alpha-Linolenic acid`
+- `Prostaglandin F2α` → `Prostaglandin F2alpha`
+- `15-Deoxy-δ-12,14-prostaglandin D2` → `15-Deoxy-delta-12,14-prostaglandin D2`
+- `11β-13,14-Dihydro-15-keto prostaglandinF2α` →
+  `11beta-13,14-Dihydro-15-keto prostaglandinF2alpha`
+
+`id_mapping_*.csv` 同时保留 **original_name + ascii_name** 两列, 作为本地脚本
+(用原名) 和 MetaboAnalyst (用 ASCII 名) 之间的桥梁; `asciified` 列标记是否
+实际做了替换 (审计 + reviewer 抽查用).
 
 ## 协变量残差化原理
 
@@ -317,10 +377,11 @@ def main():
         id_map.to_csv(out_id, index=False, encoding='utf-8-sig')
         n_hmdb = int(id_map['has_HMDB'].sum())
         n_kegg = int(id_map['has_KEGG'].sum())
+        n_ascii = int(id_map['asciified'].sum())
         n_total = len(id_map)
         print(f'  ✓ {out_id.relative_to(ROOT)}  HMDB: {n_hmdb}/{n_total} '
               f'({n_hmdb/n_total*100:.1f}%), KEGG: {n_kegg}/{n_total} '
-              f'({n_kegg/n_total*100:.1f}%)')
+              f'({n_kegg/n_total*100:.1f}%), ASCII-renamed: {n_ascii}')
 
     # 样本元数据
     md = write_samples_metadata(cov)

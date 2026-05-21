@@ -163,6 +163,31 @@ def build_concentration_table(data_features_x_samples, cov_df, label_col='BMI_gr
     return table
 
 
+def build_concentration_table_hmdb(data_features_x_samples, meta_df, cov_df,
+                                   label_col='BMI_group'):
+    """构造 HMDB ID 列名版本浓度表: 只保留有 HMDB ID 的代谢物.
+
+    用途: MetaboAnalyst Name Map 步骤选 "HMDB ID" 作为 ID 类型, 直接命中,
+    跳过 fuzzy match. 损失没 HMDB ID 的代谢物 (80 主轨 9/67, 50 探索轨 10/73);
+    两个核心候选 12-HETrE / 20-HDoHE 都有 HMDB ID, 不受影响.
+    """
+    name_to_hmdb = dict(zip(meta_df['Metabolite Name'], meta_df['HMDB ID']))
+    valid_mets = [m for m in data_features_x_samples.index
+                  if pd.notna(name_to_hmdb.get(m))
+                  and str(name_to_hmdb.get(m)).strip() != '']
+    data_f = data_features_x_samples.loc[valid_mets].copy()
+    # 列名 = HMDB ID
+    data_f.index = [name_to_hmdb[m] for m in valid_mets]
+
+    samples = list(data_f.columns)
+    df = data_f.T.copy()
+    table = df.reset_index().rename(columns={'index': 'Sample'})
+    labels = cov_df.loc[samples, label_col].values
+    label_map = {'正常': 'Normal', '超重肥胖': 'Overweight_Obese'}
+    table.insert(1, 'Label', [label_map.get(l, l) for l in labels])
+    return table, len(valid_mets), len(data_features_x_samples) - len(valid_mets)
+
+
 def build_id_mapping(meta_df):
     """生成 ID 映射诊断表: 每个代谢物的 HMDB / KEGG ID + ASCII 名 + 缺失标记.
 
@@ -370,6 +395,21 @@ def main():
         out_raw = OUT_DIR / f'concentration_raw_{track}.csv'
         tbl_raw.to_csv(out_raw, index=False, encoding='utf-8-sig')
         print(f'  ✓ {out_raw.relative_to(ROOT)}  ({tbl_raw.shape})')
+
+        # 浓度表 — HMDB ID 列名版 (主, residualized)
+        tbl_resid_hmdb, n_kept, n_dropped = build_concentration_table_hmdb(
+            data_resid, meta, cov)
+        out_resid_hmdb = OUT_DIR / f'concentration_residualized_{track}_hmdb.csv'
+        tbl_resid_hmdb.to_csv(out_resid_hmdb, index=False, encoding='utf-8-sig')
+        print(f'  ✓ {out_resid_hmdb.relative_to(ROOT)}  '
+              f'({tbl_resid_hmdb.shape}, kept {n_kept}, dropped {n_dropped} '
+              f'no-HMDB-ID metabolites)')
+
+        # 浓度表 — HMDB ID 列名版 (对照, raw)
+        tbl_raw_hmdb, _, _ = build_concentration_table_hmdb(data, meta, cov)
+        out_raw_hmdb = OUT_DIR / f'concentration_raw_{track}_hmdb.csv'
+        tbl_raw_hmdb.to_csv(out_raw_hmdb, index=False, encoding='utf-8-sig')
+        print(f'  ✓ {out_raw_hmdb.relative_to(ROOT)}  ({tbl_raw_hmdb.shape})')
 
         # ID 映射
         id_map = build_id_mapping(meta)

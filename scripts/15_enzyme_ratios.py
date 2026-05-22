@@ -74,6 +74,7 @@ ENZYME_COLORS = {'COX': '#D62728', 'LOX': '#2CA02C', 'CYP': '#1F77B4', 'sEH': '#
 # Exact metabolite names per panel (ori_n165_filtered80_imputed.xlsx + ori_allmet_QC.xlsx)
 EPA = '5Z,8Z,11Z,14Z,17Z-Eicosapentaenoic acid'        # only in ori_allmet_QC
 DHA = '4Z,7Z,10Z,13Z,16Z,19Z-Docosahexaenoic acid'     # only in ori_allmet_QC
+DGLA = 'Dihomo-γ-linolenic acid'                       # only in ori_allmet_QC
 
 # (enzyme_group, ratio_name, rationale, numerator metab list, denominator metab list)
 RATIOS = [
@@ -87,7 +88,30 @@ RATIOS = [
     ('COX', 'PGE1 / PGE2', 'DGLA vs AA COX 偏移 (PGE1 抗炎 vs PGE2 促炎)',
      ['Prostaglandin E1'], ['Prostaglandin E2']),
 
+    ('COX', 'PGE1 / DGLA', 'DGLA 系 COX 总通量',
+     ['Prostaglandin E1'], [DGLA]),
+
+    ('PGDH', '15-keto-PGE2 / PGE2', '15-PGDH 代谢通量 (AA 系)',
+     ['15-Keto prostaglandin E2', '13,14-Dihydro-15-keto prostaglandin E2'],
+     ['Prostaglandin E2']),
+
     # ===== LOX =====
+    ('LOX', '9-HODE / LA', '9-LOX 通量 (LA 系)',
+     ['9-Hydroxy-10E,12Z-octadecadienoic acid'],
+     ['Linoleic acid']),
+
+    ('LOX', '13-HODE / LA', '15-LOX 通量 (LA 系)',
+     ['13-Hydroxy-9Z,11E-octadecadienoic acid'],
+     ['Linoleic acid']),
+
+    ('LOX', '15-HETrE / DGLA', '15-LOX 通量 (DGLA 系)',
+     ['15-Hydroxy-8Z,11Z,13E-eicosatrienoic acid'],
+     [DGLA]),
+
+    ('LOX', '12-HETrE / DGLA', '12-LOX 通量 (DGLA 系)',
+     ['12-Hydroxy-8Z,10E,14Z-eicosatrienoic acid'],
+     [DGLA]),
+
     ('LOX', '12-HETE / AA', '纯 12-LOX 通量 (AA 系)',
      ['12-Hydroxy-5Z,8Z,10E,14Z-eicosatetraenoic acid'],
      ['Arachidonic acid']),
@@ -100,11 +124,11 @@ RATIOS = [
      ['12-Hydroxy-5,8,10,14,17-eicosapentaenoic acid'],
      [EPA]),
 
+    ('LOX', '14-HDoHE / DHA', '12-LOX 通量 (DHA 系)',
+     ['14-Hydroxy-4Z,7Z,10Z,12E,16Z,19Z-docosahexaenoic acid'],
+     [DHA]),
+
     # ===== CYP =====
-    # 2026-05-19 修订: 原 (16+20-HDoHE)/DHA 混合 CYP+非酶, 改为纯 20-HDoHE/DHA.
-    # 依据: 16-HDoHE 实证 log2FC+0.173 与非酶组同质 (VanRollins 2008: CYP4 偏好 ω-3 即 C20,
-    # ω-7 即 C16 不是 CYP4 偏好位; Yin & Porter 2005: 16-HDHA 17E 命名契合自由基机制).
-    # 剔除 16-HDoHE 后 CYP 信号反而增强 (FC 1.31× → 1.35×, p 0.009 → 0.008).
     ('CYP', '20-HDoHE / DHA', 'CYP4 ω-3 羟化通量 (DHA 系, 严格版)',
      ['20-Hydroxy-4Z,7Z,10Z,13Z,16Z,18E-docosahexaenoic acid'],
      [DHA]),
@@ -141,17 +165,17 @@ def load_raw_matrix():
 
     df_all = pd.read_excel(RAW_DIR / 'ori_allmet_QC.xlsx')
     all_sample_cols = [c for c in df_all.columns if c not in META_COLS and c != UNIT_COL]
-    epa_dha = df_all[df_all['Metabolite Name'].isin([EPA, DHA])].set_index(
+    epa_dha = df_all[df_all['Metabolite Name'].isin([EPA, DHA, DGLA])].set_index(
         'Metabolite Name')[all_sample_cols]
     # Align EPA/DHA columns to the 165 main-cohort omx_ids
     missing_in_qc = [s for s in sample_cols if s not in all_sample_cols]
     if missing_in_qc:
         raise RuntimeError(f'  {len(missing_in_qc)} 主队列样本不在 QC 表内: {missing_in_qc[:5]}')
     epa_dha_165 = epa_dha[sample_cols]
-    print(f'  EPA/DHA (from 673-met 全表): {epa_dha_165.shape[0]} 特征 (检出 EPA/DHA 应 100%)')
+    print(f'  EPA/DHA/DGLA (from 673-met 全表): {epa_dha_165.shape[0]} 特征 (检出应 100%)')
 
-    # Detection diagnostics for EPA/DHA on 165
-    for nm in [EPA, DHA]:
+    # Detection diagnostics for EPA/DHA/DGLA on 165
+    for nm in [EPA, DHA, DGLA]:
         vals = pd.to_numeric(epa_dha_165.loc[nm], errors='coerce')
         nz = vals[(vals > 0) & vals.notna()]
         print(f'    [{nm}] 检出 {len(nz)}/{len(sample_cols)} '
@@ -348,7 +372,7 @@ def main():
     print(f'  ✓ {mat_csv.relative_to(ROOT)}')
 
     # Plot: 3 rows × 4 cols, 11 ratios + 1 blank
-    fig, axes = plt.subplots(3, 4, figsize=(16, 11))
+    fig, axes = plt.subplots(5, 4, figsize=(16, 18))
     axes_flat = axes.flatten()
     for i, r in res.iterrows():
         ax = axes_flat[i]
